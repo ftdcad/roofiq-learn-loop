@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import { Home, Calculator, Layers, Building, Target, FileText } from 'lucide-react';
 import { RoofPrediction } from '@/types/roof-analysis';
+import { RoofSketch } from '@/components/RoofSketch';
 
 interface ProfessionalReportViewProps {
   prediction: RoofPrediction;
