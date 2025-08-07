@@ -23,22 +23,23 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
     setTesting(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('test-openai');
+      // Test simple OpenAI connection first
+      const { data, error } = await supabase.functions.invoke('test-openai-simple');
       
       if (error) throw error;
       
       setStatus(data);
-      onStatusChange?.(data.working);
+      onStatusChange?.(data.success);
       
-      if (data.working) {
+      if (data.success) {
         toast({
           title: "✅ OpenAI Connected!",
-          description: `Model: ${data.model} | GPT-4 Vision: ${data.hasGPT4Vision ? 'Available' : 'Not Available'}`,
+          description: `${data.message} | Model: ${data.model}`,
         });
       } else {
         toast({
           title: "❌ OpenAI Connection Failed",
-          description: data.error,
+          description: `${data.error} - ${data.fix || 'Check your API key'}`,
           variant: "destructive"
         });
       }
@@ -96,16 +97,16 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
             <div className="font-medium">OpenAI Connection</div>
             <div className="text-sm text-muted-foreground">
               {status === null ? 'Not tested' : 
-               status.working ? `Connected (${status.model})` : 
+               status.success ? `Connected (${status.model})` : 
                status.error}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {status?.working && (
+          {status?.success && (
             <Badge variant="secondary" className="bg-roofiq-green/10 text-roofiq-green">
-              GPT-4 Vision: {status.hasGPT4Vision ? 'Available' : 'Not Available'}
+              Model: {status.model}
             </Badge>
           )}
           
@@ -128,21 +129,21 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
       </div>
 
       {/* Error Details */}
-      {status && !status.working && (
+      {status && !status.success && (
         <Alert className="border-destructive bg-destructive/5">
           <AlertTriangle className="h-4 w-4 text-destructive" />
           <AlertDescription>
             <strong>Connection Issues:</strong>
             <br />
-            <span className="text-sm">{status.details}</span>
+            <span className="text-sm">{status.details || status.fix}</span>
             {status.status === 401 && (
               <div className="mt-2 text-xs">
-                💡 Fix: Check your OpenAI API key in Supabase Dashboard → Settings → API
+                💡 Fix: {status.fix || 'Check your OpenAI API key'}
               </div>
             )}
             {status.status === 402 && (
               <div className="mt-2 text-xs">
-                💡 Fix: Add credits to your OpenAI account at platform.openai.com
+                💡 Fix: {status.fix || 'Add credits to your OpenAI account'}
               </div>
             )}
           </AlertDescription>
@@ -150,11 +151,11 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
       )}
 
       {/* Success Details */}
-      {status?.working && (
+      {status?.success && (
         <div className="text-xs text-muted-foreground space-y-1">
           <div>✅ API Key Valid</div>
-          <div>✅ Models Available: {status.availableModels}</div>
-          <div>✅ Chat Completion: "{status.testMessage}"</div>
+          <div>✅ Model Available: {status.model}</div>
+          <div>✅ Response: "{status.message}"</div>
           <div>✅ Last Tested: {new Date(status.timestamp).toLocaleTimeString()}</div>
         </div>
       )}

@@ -129,87 +129,43 @@ Important:
 
       if (!openaiRequest.ok) {
         const errorData = await openaiRequest.json().catch(() => ({}));
-        console.error(`OpenAI API error ${openaiRequest.status}:`, errorData);
-        throw new Error(`OpenAI API error: ${openaiRequest.status} - ${errorData.error?.message || 'Unknown error'}`);
+        console.error(`❌ OpenAI API error ${openaiRequest.status}:`, errorData);
+        
+        // DON'T hide the error - return it to the user!
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: `OpenAI API error: ${openaiRequest.status}`,
+            details: errorData,
+            message: errorData.error?.message || 'Unknown OpenAI error',
+            openaiStatus: openaiRequest.status,
+            timestamp: new Date().toISOString()
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       openaiResponse = await openaiRequest.json();
-      console.log('OpenAI analysis completed');
+      console.log('✅ OpenAI analysis completed successfully');
+      
     } catch (error) {
-      console.error('OpenAI API error:', error);
+      console.error('❌ OpenAI API error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       
-      // Fallback to enhanced mock prediction if OpenAI fails
-      const mockPrediction = {
-        totalArea: 1800 + Math.random() * 1000,
-        squares: 0,
-        confidence: 75 + Math.random() * 20,
-        facets: [
-          {
-            id: 'main-roof',
-            area: 1200 + Math.random() * 400,
-            pitch: '8/12',
-            type: 'main',
-            confidence: 85
-          }
-        ],
-        measurements: {
-          ridges: 40 + Math.random() * 20,
-          valleys: 15 + Math.random() * 10,
-          hips: 25 + Math.random() * 15,
-          rakes: 50 + Math.random() * 20,
-          eaves: 70 + Math.random() * 30,
-          gutters: 60 + Math.random() * 20,
-          stepFlashing: 20 + Math.random() * 10,
-          drip: 80 + Math.random() * 20
-        },
-        predominantPitch: '8/12',
-        wasteFactor: 15,
-        areasByPitch: [
-          { pitch: '8/12', area: 1800, squares: 18, percentage: 100 }
-        ],
-        propertyDetails: {
-          stories: 1,
-          estimatedAtticArea: 1400,
-          structureComplexity: 'Moderate',
-          roofAccessibility: 'Moderate',
-          chimneys: 1,
-          skylights: 2,
-          vents: 4
-        },
-        reportSummary: {
-          totalPerimeter: 180,
-          averagePitch: '8/12',
-          roofComplexityScore: 65
-        }
-      };
-      
-      mockPrediction.squares = mockPrediction.totalArea / 100;
-      
-      // Store the analysis in database
-      const { data: analysisData, error: dbError } = await supabase
-        .from('roof_analyses')
-        .insert({
-          address,
-          coordinates: { lat: 40.7128, lng: -74.0060 },
-          satellite_image_url: satelliteImage,
-          ai_prediction: mockPrediction,
-          ai_confidence: mockPrediction.confidence
-        })
-        .select()
-        .single();
-
-      if (dbError) {
-        console.error('Database error:', dbError);
-      }
-
+      // EXPOSE the real error instead of falling back to mock data
       return new Response(
-        JSON.stringify({
-          success: true,
-          prediction: mockPrediction,
-          analysisId: analysisData?.id,
-          note: 'Using enhanced AI prediction (OpenAI temporarily unavailable)'
+        JSON.stringify({ 
+          success: false,
+          error: 'OpenAI connection failed',
+          details: error.message,
+          errorType: error.name,
+          timestamp: new Date().toISOString(),
+          note: 'Real OpenAI error (not mock data)'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
