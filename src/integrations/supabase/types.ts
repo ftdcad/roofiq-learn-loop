@@ -143,6 +143,8 @@ export type Database = {
           comparison_results: Json | null
           coordinates: Json
           created_at: string
+          footprint_data: Json | null
+          footprint_upload_date: string | null
           id: string
           overall_accuracy_score: number | null
           prediction_date: string
@@ -161,6 +163,8 @@ export type Database = {
           comparison_results?: Json | null
           coordinates: Json
           created_at?: string
+          footprint_data?: Json | null
+          footprint_upload_date?: string | null
           id?: string
           overall_accuracy_score?: number | null
           prediction_date?: string
@@ -179,6 +183,8 @@ export type Database = {
           comparison_results?: Json | null
           coordinates?: Json
           created_at?: string
+          footprint_data?: Json | null
+          footprint_upload_date?: string | null
           id?: string
           overall_accuracy_score?: number | null
           prediction_date?: string
