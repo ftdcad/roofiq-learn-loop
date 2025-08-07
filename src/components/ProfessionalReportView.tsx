@@ -145,18 +145,18 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(data.areasByPitch && Array.isArray(data.areasByPitch) ? data.areasByPitch : []).map((pitchArea, index) => (
+              {(Array.isArray(data.areasByPitch) ? data.areasByPitch.filter(Boolean) : []).map((pitchArea, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{pitchArea.pitch || 'N/A'}</TableCell>
+                  <TableCell className="font-medium">{pitchArea?.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {Number(pitchArea.area ?? 0).toLocaleString()}
+                    {Number(pitchArea?.area ?? 0).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {Number(pitchArea.squares ?? 0).toFixed(2)}
+                    {Number(pitchArea?.squares ?? 0).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className="font-mono">
-                      {Number(pitchArea.percentage ?? 0)}%
+                      {Number(pitchArea?.percentage ?? 0)}%
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -283,26 +283,26 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(data.facets && Array.isArray(data.facets) ? data.facets : []).map((facet, index) => (
-                <TableRow key={facet.id || `facet-${index}`}>
+              {(Array.isArray(data.facets) ? data.facets.filter(Boolean) : []).map((facet, index) => (
+                <TableRow key={facet?.id || `facet-${index}`}>
                   <TableCell className="font-medium">#{index + 1}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
-                      {facet.type || 'Unknown'}
+                      {facet?.type || 'Unknown'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono">{facet.pitch || 'N/A'}</TableCell>
+                  <TableCell className="font-mono">{facet?.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {(facet.area || 0).toLocaleString()}
+                    {Number(facet?.area ?? 0).toLocaleString()}
                   </TableCell>
                   {!isProfessionalReport && (
                     <TableCell className="text-right">
                       <Badge variant="outline" className={`${
-                        (facet.confidence || 0) >= 85 ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
-                        (facet.confidence || 0) >= 70 ? 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20' :
+                        Number(facet?.confidence ?? 0) >= 85 ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
+                        Number(facet?.confidence ?? 0) >= 70 ? 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20' :
                         'bg-roofiq-red/10 text-roofiq-red border-roofiq-red/20'
                       }`}>
-                        {(facet.confidence || 0).toFixed(1)}%
+                        {Number(facet?.confidence ?? 0).toFixed(1)}%
                       </Badge>
                     </TableCell>
                   )}
