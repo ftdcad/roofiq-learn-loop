@@ -14,9 +14,10 @@ export const ShowYourWork: React.FC<ShowYourWorkProps> = ({ prediction }) => {
   const pred = prediction.prediction;
 
   // Calculate breakdown (simplified for demo)
-  const baseFootprint = Math.round(pred.totalArea * 0.85);
-  const overhangs = Math.round(pred.totalArea * 0.12);
-  const miscAdditions = pred.totalArea - baseFootprint - overhangs;
+  const totalArea = Number(pred.totalArea ?? 0);
+  const baseFootprint = Math.round(totalArea * 0.85);
+  const overhangs = Math.round(totalArea * 0.12);
+  const miscAdditions = totalArea - baseFootprint - overhangs;
 
   const steps = [
     {
@@ -73,7 +74,7 @@ export const ShowYourWork: React.FC<ShowYourWorkProps> = ({ prediction }) => {
                   </div>
                 </div>
                 <div className="font-mono text-sm font-medium text-foreground">
-                  {step.value > 0 ? '+' : ''}{step.value.toLocaleString()} sq ft
+                  {Number(step.value ?? 0) > 0 ? '+' : ''}{Number(step.value ?? 0).toLocaleString()} sq ft
                 </div>
               </div>
             ))}
@@ -82,7 +83,7 @@ export const ShowYourWork: React.FC<ShowYourWorkProps> = ({ prediction }) => {
               <div className="flex justify-between items-center font-medium">
                 <span className="text-foreground">Total roof area:</span>
                 <span className="font-mono text-lg text-roofiq-blue">
-                  {pred.totalArea.toLocaleString()} sq ft
+                  {Number(pred.totalArea ?? 0).toLocaleString()} sq ft
                 </span>
               </div>
             </div>

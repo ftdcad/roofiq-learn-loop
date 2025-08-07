@@ -43,8 +43,8 @@ export const NeighborhoodContext: React.FC<NeighborhoodContextProps> = ({
           <div className="space-y-2">
             <div className="font-medium">🚩 Unusual for neighborhood</div>
             <div className="text-sm space-y-1">
-              <div>Prediction: {prediction.toLocaleString()} sq ft</div>
-              <div>Neighborhood avg: {averageRoofArea.toLocaleString()} sq ft</div>
+              <div>Prediction: {Number(prediction ?? 0).toLocaleString()} sq ft</div>
+              <div>Neighborhood avg: {Number(averageRoofArea ?? 0).toLocaleString()} sq ft</div>
               <div>Based on {totalSamples} nearby roofs</div>
             </div>
             <Badge variant="outline" className="bg-roofiq-red/5 text-roofiq-red border-roofiq-red/20">
@@ -63,7 +63,7 @@ export const NeighborhoodContext: React.FC<NeighborhoodContextProps> = ({
         <div className="space-y-1">
           <div className="font-medium">✓ Consistent with neighborhood</div>
           <div className="text-sm">
-            Avg: {averageRoofArea.toLocaleString()} sq ft ({totalSamples} nearby roofs)
+            Avg: {Number(averageRoofArea ?? 0).toLocaleString()} sq ft ({totalSamples} nearby roofs)
           </div>
         </div>
       </AlertDescription>
