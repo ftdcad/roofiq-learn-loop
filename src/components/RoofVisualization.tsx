@@ -9,6 +9,7 @@ import { InstantFeedback } from './InstantFeedback';
 import { NeighborhoodContext } from './NeighborhoodContext';
 import { ShowYourWork } from './ShowYourWork';
 import { NeighborhoodService, NeighborhoodData } from '@/services/neighborhoodService';
+import { EagleViewUploader } from './EagleViewUploader';
 
 interface RoofVisualizationProps {
   prediction: RoofPrediction;
@@ -170,6 +171,15 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
           onFeedbackSubmitted={() => setFeedbackSubmitted(true)}
         />
       )}
+
+      {/* EagleView Upload for Learning */}
+      <EagleViewUploader 
+        predictionId={prediction.id}
+        onUploadComplete={(data) => {
+          console.log('EagleView data received:', data);
+          // Could trigger a re-fetch or update UI
+        }}
+      />
     </div>
   );
 };

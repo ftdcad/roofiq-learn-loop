@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      learning_events: {
+        Row: {
+          accuracy_delta: number | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          patterns_learned: Json | null
+          prediction_id: string
+        }
+        Insert: {
+          accuracy_delta?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          patterns_learned?: Json | null
+          prediction_id: string
+        }
+        Update: {
+          accuracy_delta?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          patterns_learned?: Json | null
+          prediction_id?: string
+        }
+        Relationships: []
+      }
       neighborhood_analysis: {
         Row: {
           address: string
@@ -71,6 +101,39 @@ export type Database = {
         }
         Relationships: []
       }
+      quality_checks: {
+        Row: {
+          confidence_calibration: number | null
+          created_at: string
+          id: string
+          internal_consistency: boolean | null
+          outlier_detection: boolean | null
+          physically_possible: boolean | null
+          prediction_id: string
+          validation_notes: string | null
+        }
+        Insert: {
+          confidence_calibration?: number | null
+          created_at?: string
+          id?: string
+          internal_consistency?: boolean | null
+          outlier_detection?: boolean | null
+          physically_possible?: boolean | null
+          prediction_id: string
+          validation_notes?: string | null
+        }
+        Update: {
+          confidence_calibration?: number | null
+          created_at?: string
+          id?: string
+          internal_consistency?: boolean | null
+          outlier_detection?: boolean | null
+          physically_possible?: boolean | null
+          prediction_id?: string
+          validation_notes?: string | null
+        }
+        Relationships: []
+      }
       roof_analyses: {
         Row: {
           address: string
@@ -125,6 +188,42 @@ export type Database = {
           satellite_image_url?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_metrics: {
+        Row: {
+          average_processing_time_ms: number | null
+          cost_per_prediction: number | null
+          created_at: string
+          daily_predictions: number | null
+          error_rate: number | null
+          id: string
+          learning_velocity: number | null
+          metadata: Json | null
+          metric_date: string
+        }
+        Insert: {
+          average_processing_time_ms?: number | null
+          cost_per_prediction?: number | null
+          created_at?: string
+          daily_predictions?: number | null
+          error_rate?: number | null
+          id?: string
+          learning_velocity?: number | null
+          metadata?: Json | null
+          metric_date?: string
+        }
+        Update: {
+          average_processing_time_ms?: number | null
+          cost_per_prediction?: number | null
+          created_at?: string
+          daily_predictions?: number | null
+          error_rate?: number | null
+          id?: string
+          learning_velocity?: number | null
+          metadata?: Json | null
+          metric_date?: string
         }
         Relationships: []
       }
