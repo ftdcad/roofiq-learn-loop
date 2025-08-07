@@ -11,16 +11,21 @@ import { RoofVisualization } from '@/components/RoofVisualization';
 import { ComparisonMetrics } from '@/components/ComparisonMetrics';
 import { ProfessionalReportView } from '@/components/ProfessionalReportView';
 import { RoofSketch } from '@/components/RoofSketch';
-import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle } from 'lucide-react';
+import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle, TriangleAlert } from 'lucide-react';
 import { RoofPrediction, RoofFacet } from '@/types/roof-analysis';
 import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
+import { MapboxService } from '@/services/mapboxService';
+import { RoofTraceOverlay } from '@/components/RoofTraceOverlay';
 
 export const BetaTestingDashboard: React.FC = () => {
   const [currentPrediction, setCurrentPrediction] = useState<RoofPrediction | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
   const [trainingProgress, setTrainingProgress] = useState<any>(null);
+  const [satelliteUrl, setSatelliteUrl] = useState<string | null>(null);
+  const [isTracing, setIsTracing] = useState(false);
+  const [usedZoom] = useState(20);
   const { toast } = useToast();
 
   const handleAddressSubmit = async (address: string) => {
@@ -123,6 +128,25 @@ export const BetaTestingDashboard: React.FC = () => {
     
     loadTrainingProgress();
   }, []);
+
+  // Auto-capture satellite image when we have an analysis with coordinates
+  useEffect(() => {
+    const run = async () => {
+      if (!currentPrediction?.coordinates) return;
+      try {
+        const img = await MapboxService.captureSatelliteImage(
+          currentPrediction.address,
+          currentPrediction.coordinates,
+          { zoom: usedZoom, size: '1024x1024', retina: true }
+        );
+        if (img) setSatelliteUrl(img);
+      } catch (e) {
+        console.warn('Satellite capture failed', e);
+        toast({ title: 'Satellite capture failed', description: 'Check Mapbox key in Supabase edge function secrets.', variant: 'destructive' });
+      }
+    };
+    run();
+  }, [currentPrediction?.id]);
 
   // Build facets for diagram (fallback to simple rectangle split if missing)
   function buildFallbackFacets(totalArea: number, totalPerimeter?: number, predominantPitch?: string): RoofFacet[] {
@@ -240,6 +264,72 @@ export const BetaTestingDashboard: React.FC = () => {
         {/* Professional Reports */}
         {currentPrediction && (
           <div className="space-y-8">
+            {/* Satellite Image & Manual Tracing */}
+            <Card className="roofiq-card">
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">Satellite Image</h3>
+                    <p className="text-sm text-muted-foreground">Captured for {currentPrediction.address}. Used for manual tracing.</p>
+                  </div>
+                  {!hasGeometry && (
+                    <div className="flex items-center gap-2 text-roofiq-amber">
+                      <TriangleAlert className="w-4 h-4" />
+                      <span className="text-xs font-medium">Illustrative only (not to scale) — trace to replace</span>
+                    </div>
+                  )}
+                </div>
+
+                {satelliteUrl ? (
+                  <div className="relative">
+                    <img src={satelliteUrl} alt={`Satellite of ${currentPrediction.address}`} className="w-full h-auto rounded-lg border border-border" />
+                    {!hasGeometry && (
+                      <div className="absolute bottom-3 left-3 px-2 py-1 rounded bg-background/80 text-xs border border-border">No verified geometry yet</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Fetching satellite image…</div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  {!hasGeometry && (
+                    <Button onClick={() => setIsTracing(true)}>Trace roof manually</Button>
+                  )}
+                </div>
+
+                {isTracing && satelliteUrl && (
+                  <RoofTraceOverlay
+                    imageUrl={satelliteUrl}
+                    address={currentPrediction.address}
+                    coordinates={currentPrediction.coordinates}
+                    zoom={usedZoom}
+                    retina={true}
+                    onCancel={() => setIsTracing(false)}
+                    onSave={({ facets, perimeterFeet, totalAreaFeet2 }) => {
+                      if (!currentPrediction) return;
+                      const updated = {
+                        ...currentPrediction,
+                        satelliteImage: satelliteUrl,
+                        prediction: {
+                          ...currentPrediction.prediction,
+                          facets: facets,
+                          totalArea: totalAreaFeet2,
+                          squares: Number((totalAreaFeet2 / 100).toFixed(1)),
+                          reportSummary: {
+                            ...currentPrediction.prediction.reportSummary,
+                            totalPerimeter: perimeterFeet,
+                          },
+                        },
+                      } as RoofPrediction;
+                      setCurrentPrediction(updated);
+                      setIsTracing(false);
+                      toast({ title: 'Geometry updated', description: 'Manual trace applied to the technical diagram.' });
+                    }}
+                  />
+                )}
+              </div>
+            </Card>
+
             {/* Dual Upload Section */}
             {!currentPrediction.validationData && (
               <Card className="roofiq-card">
@@ -251,6 +341,7 @@ export const BetaTestingDashboard: React.FC = () => {
                 </div>
               </Card>
             )}
+
 
             {/* Comparison Results */}
             {currentPrediction.validationData && currentPrediction.comparison && (
@@ -297,6 +388,12 @@ export const BetaTestingDashboard: React.FC = () => {
                     <CardTitle>Technical Roof Diagram</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {!hasGeometry && (
+                      <div className="mb-3 inline-flex items-center gap-2 text-xs text-roofiq-amber">
+                        <TriangleAlert className="w-4 h-4" />
+                        <span>Illustrative only — add a manual trace to replace this sketch</span>
+                      </div>
+                    )}
                     <RoofSketch 
                       facets={diagramFacets}
                       perimeterFeet={currentPrediction.prediction.reportSummary.totalPerimeter}
