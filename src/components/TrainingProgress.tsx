@@ -22,7 +22,7 @@ export const TrainingProgress: React.FC<TrainingProgressProps> = ({ progress }) 
               AI Training Progress
             </h2>
             <p className="text-muted-foreground mt-1">
-              Every comparison makes our AI smarter • Target: 95% accuracy
+              Every comparison makes our AI smarter
             </p>
           </div>
           <Badge variant="secondary" className="bg-roofiq-blue/10 text-roofiq-blue border-roofiq-blue/20">
@@ -89,7 +89,7 @@ export const TrainingProgress: React.FC<TrainingProgressProps> = ({ progress }) 
               <div className="text-2xl font-bold text-foreground">
                 {progress.estimatedDaysToTarget}
               </div>
-              <div className="text-xs text-muted-foreground">Days to 95%</div>
+              <div className="text-xs text-muted-foreground">Days to target</div>
             </div>
           </div>
           

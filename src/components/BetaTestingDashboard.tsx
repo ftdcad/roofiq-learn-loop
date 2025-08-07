@@ -154,21 +154,9 @@ export const BetaTestingDashboard: React.FC = () => {
               
               {/* Value Proposition */}
               <p className="text-lg text-white/80 max-w-3xl mx-auto leading-relaxed">
-                Advanced AI-powered roof measurement system that learns from professional roof reports. 
-                Target: <span className="text-roofiq-green-light font-semibold">95% accuracy</span> with 3,000+ comparisons.
+                Advanced AI-powered roof measurement system that learns from professional roof reports.
               </p>
               
-              {/* Visual Elements */}
-              <div className="flex items-center justify-center gap-8 pt-4">
-                <div className="flex items-center gap-2 text-white/80">
-                  <div className="w-2 h-2 rounded-full bg-roofiq-green-light animate-pulse"></div>
-                  <span className="text-sm">AI Learning Active</span>
-                </div>
-                <div className="flex items-center gap-2 text-white/80">
-                  <Sparkles className="w-4 h-4 text-roofiq-amber" />
-                  <span className="text-sm">Professional Grade Analysis</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
