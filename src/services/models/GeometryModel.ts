@@ -33,12 +33,20 @@ export class GeometryModel {
 
       // Extract prediction with geometry-specific processing
       const basePrediction = data.prediction;
+      console.log('GeometryModel: Raw data structure:', JSON.stringify(data, null, 2));
+      console.log('GeometryModel: Base prediction structure:', JSON.stringify(basePrediction, null, 2));
+      console.log('GeometryModel: Facets data type and value:', typeof basePrediction.facets, basePrediction.facets);
+      
+      // Validate and sanitize facets data
+      const safeFacets = Array.isArray(basePrediction.facets) ? basePrediction.facets : [];
+      console.log('GeometryModel: Safe facets array:', safeFacets);
+      
       const uncertainty = this.calculateGeometricUncertainty(input, basePrediction);
       
       const prediction: ModelPrediction = {
-        estimate: basePrediction.totalArea,
-        facets: this.enhanceFacetsWithGeometryData(basePrediction.facets, input),
-        measurements: this.enhanceMeasurements(basePrediction.measurements, input),
+        estimate: basePrediction.totalArea || 0,
+        facets: this.enhanceFacetsWithGeometryData(safeFacets, input),
+        measurements: this.enhanceMeasurements(basePrediction.measurements || {}, input),
         confidence: this.calculateGeometryConfidence(basePrediction, input),
         uncertainty: uncertainty.variance,
         reasoning: this.generateGeometryReasoning(basePrediction, input, uncertainty),

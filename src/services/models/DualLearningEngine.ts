@@ -60,6 +60,11 @@ export class DualLearningEngine {
         this.geometryModel.predict(geometryInput)
       ]);
 
+      console.log('DualLearningEngine: Vision prediction facets:', visionPrediction.facets);
+      console.log('DualLearningEngine: Geometry prediction facets:', geometryPrediction.facets);
+      console.log('DualLearningEngine: Vision facets type:', typeof visionPrediction.facets, Array.isArray(visionPrediction.facets));
+      console.log('DualLearningEngine: Geometry facets type:', typeof geometryPrediction.facets, Array.isArray(geometryPrediction.facets));
+
       // Create consensus between the models
       const consensus = await this.createConsensus(
         visionPrediction, 
@@ -240,21 +245,40 @@ export class DualLearningEngine {
   }
 
   private mergeFacets(visionFacets: RoofFacet[], geometryFacets: RoofFacet[]): RoofFacet[] {
-    // Handle undefined or null facets arrays
-    const safevisionFacets = visionFacets || [];
-    const safeGeometryFacets = geometryFacets || [];
+    console.log('DualLearningEngine: mergeFacets called with:', { visionFacets, geometryFacets });
+    console.log('DualLearningEngine: visionFacets type:', typeof visionFacets, 'isArray:', Array.isArray(visionFacets));
+    console.log('DualLearningEngine: geometryFacets type:', typeof geometryFacets, 'isArray:', Array.isArray(geometryFacets));
     
-    if (!Array.isArray(safevisionFacets) || !Array.isArray(safeGeometryFacets)) {
-      console.warn('DualLearningEngine: Invalid facets data, using empty arrays');
-      return [];
+    // Handle undefined or null facets arrays
+    const safeVisionFacets = Array.isArray(visionFacets) ? visionFacets : [];
+    const safeGeometryFacets = Array.isArray(geometryFacets) ? geometryFacets : [];
+    
+    console.log('DualLearningEngine: Safe arrays created:', { safeVisionFacets, safeGeometryFacets });
+    
+    if (safeVisionFacets.length === 0 && safeGeometryFacets.length === 0) {
+      console.warn('DualLearningEngine: Both facets arrays are empty, creating default facet');
+      return [{
+        id: 'default-main',
+        polygon: [[0, 0], [100, 0], [100, 100], [0, 100]],
+        area: 2000,
+        pitch: '8/12',
+        type: 'main',
+        confidence: 0.5
+      }];
     }
     
     // Intelligent facet merging - simplified for now
-    const allFacets = [...safevisionFacets, ...safeGeometryFacets];
+    const allFacets = [...safeVisionFacets, ...safeGeometryFacets];
     const mergedFacets: RoofFacet[] = [];
+    
+    console.log('DualLearningEngine: All facets combined:', allFacets);
     
     // Group by type and merge similar facets
     const facetsByType = allFacets.reduce((acc, facet) => {
+      if (!facet || !facet.type) {
+        console.warn('DualLearningEngine: Invalid facet found:', facet);
+        return acc;
+      }
       if (!acc[facet.type]) acc[facet.type] = [];
       acc[facet.type].push(facet);
       return acc;

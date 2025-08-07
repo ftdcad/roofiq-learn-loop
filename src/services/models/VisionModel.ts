@@ -29,12 +29,20 @@ export class VisionModel {
 
       // Extract prediction with vision-specific processing
       const basePrediction = data.prediction;
+      console.log('VisionModel: Raw data structure:', JSON.stringify(data, null, 2));
+      console.log('VisionModel: Base prediction structure:', JSON.stringify(basePrediction, null, 2));
+      console.log('VisionModel: Facets data type and value:', typeof basePrediction.facets, basePrediction.facets);
+      
+      // Validate and sanitize facets data
+      const safeFacets = Array.isArray(basePrediction.facets) ? basePrediction.facets : [];
+      console.log('VisionModel: Safe facets array:', safeFacets);
+      
       const uncertainty = this.calculateUncertainty(input, basePrediction);
       
       const prediction: ModelPrediction = {
-        estimate: basePrediction.totalArea,
-        facets: this.enhanceFacetsWithVisionData(basePrediction.facets, input),
-        measurements: basePrediction.measurements,
+        estimate: basePrediction.totalArea || 0,
+        facets: this.enhanceFacetsWithVisionData(safeFacets, input),
+        measurements: basePrediction.measurements || {},
         confidence: this.calculateVisionConfidence(basePrediction, input),
         uncertainty: uncertainty.variance,
         reasoning: this.generateVisionReasoning(basePrediction, input, uncertainty),
