@@ -35,7 +35,7 @@ export class DualLearningEngine {
     this.learningMetrics.totalPredictions++;
 
     try {
-      console.log('DualLearningEngine: Starting dual-model prediction for:', address);
+      console.log('DualLearningEngine: Starting dual-model prediction for:', address, '- Cache cleared v2');
 
       // Prepare inputs for both models
       const imageInput: ImageAnalysisInput = {
@@ -157,11 +157,15 @@ export class DualLearningEngine {
         confidence: (visionPrediction.confidence + geometryPrediction.confidence) / 2,
         areasByPitch: this.calculateAreasByPitch(consensusFacets),
         propertyDetails: this.mergePropertyDetails(visionPrediction, geometryPrediction),
-        reportSummary: {
-          totalPerimeter: consensusFacets.reduce((sum, facet) => sum + (facet.polygon.length * 10), 0), // Mock calculation
-          averagePitch: this.calculateAveragePitch(consensusFacets),
-          roofComplexityScore: Math.min(consensusFacets.length / 10, 1) // Complexity based on facet count
-        },
+         reportSummary: {
+           totalPerimeter: (consensusFacets && consensusFacets.length > 0) 
+             ? consensusFacets.reduce((sum, facet) => {
+                 return sum + ((facet.polygon && Array.isArray(facet.polygon)) ? facet.polygon.length * 10 : 40);
+               }, 0) 
+             : 180, // Default perimeter
+           averagePitch: this.calculateAveragePitch(consensusFacets),
+           roofComplexityScore: (consensusFacets && consensusFacets.length > 0) ? Math.min(consensusFacets.length / 10, 1) : 0.5
+         },
         uncertaintyAnalysis: combinedUncertainty,
         dualModelInsights: {
           visionModelStrength: visionWeight / totalWeight,
