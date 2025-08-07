@@ -7,10 +7,25 @@ import { TrainingProgress as TrainingProgressType } from '@/types/roof-analysis'
 
 interface TrainingProgressProps {
   progress: TrainingProgressType;
+  compact?: boolean;
 }
 
-export const TrainingProgress: React.FC<TrainingProgressProps> = ({ progress }) => {
+export const TrainingProgress: React.FC<TrainingProgressProps> = ({ progress, compact = false }) => {
   const progressPercentage = (progress.totalComparisons / progress.targetComparisons) * 100;
+  
+  if (compact || progress.totalComparisons === 0) {
+    return (
+      <Card className="border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className="p-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-foreground">Training</span>
+            <span className="text-xs text-muted-foreground">{progress.totalComparisons} / {progress.targetComparisons}</span>
+          </div>
+          <Progress value={progressPercentage} className="h-2 bg-muted" />
+        </div>
+      </Card>
+    );
+  }
   
   return (
     <Card className="roofiq-card border-roofiq-blue/20">
