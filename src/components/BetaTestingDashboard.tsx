@@ -11,7 +11,7 @@ import { RoofVisualization } from '@/components/RoofVisualization';
 import { ComparisonMetrics } from '@/components/ComparisonMetrics';
 import { ProfessionalReportView } from '@/components/ProfessionalReportView';
 import { RoofSketch } from '@/components/RoofSketch';
-import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle, TriangleAlert } from 'lucide-react';
+import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle, TriangleAlert, FileText } from 'lucide-react';
 import { RoofPrediction, RoofFacet } from '@/types/roof-analysis';
 import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
@@ -19,6 +19,7 @@ import { MapboxService } from '@/services/mapboxService';
 import { RoofTraceOverlay } from '@/components/RoofTraceOverlay';
 import { Badge } from '@/components/ui/badge';
 import { ScaleCalibrationService } from '@/services/ScaleCalibrationService';
+import { TEST_EAGLEVIEW_REPORT } from '@/data/testEagleViewReport';
 
 export const BetaTestingDashboard: React.FC = () => {
   const [currentPrediction, setCurrentPrediction] = useState<RoofPrediction | null>(null);
@@ -31,6 +32,7 @@ export const BetaTestingDashboard: React.FC = () => {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibration, setCalibration] = useState<null | { feetPerPixel: number; method: 'road' | 'car' | 'combined'; confidence: number }>(null);
   const { toast } = useToast();
+  const [testReportLoaded, setTestReportLoaded] = useState(false);
 
   const handleAddressSubmit = async (address: string) => {
     setIsAnalyzing(true);
@@ -116,6 +118,85 @@ export const BetaTestingDashboard: React.FC = () => {
       });
     } finally {
       setIsProcessingUpload(false);
+    }
+  };
+
+  const loadTestReport = async () => {
+    if (!currentPrediction) {
+      toast({ title: 'No analysis yet', description: 'Run an address analysis first.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const test = TEST_EAGLEVIEW_REPORT;
+      const totalArea = Math.round(test.measurements.totalArea);
+      const predominantPitch = test.structure.predominantPitch || currentPrediction.prediction.predominantPitch;
+
+      // Build fallback facets for validation sketch
+      const vFacets = buildFallbackFacets(totalArea, undefined, predominantPitch);
+
+      const validationData = {
+        reportId: test.reportId,
+        uploadDate: new Date(),
+        facets: vFacets,
+        totalArea,
+        squares: Number((totalArea / 100).toFixed(1)),
+        measurements: {
+          ridges: test.measurements.totalRidges,
+          valleys: test.measurements.totalValleys,
+          hips: test.measurements.totalHips,
+          rakes: test.measurements.totalRakes,
+          eaves: test.measurements.totalEaves,
+          gutters: 0,
+          stepFlashing: test.measurements.totalStepFlashing,
+          drip: test.measurements.totalDripEdge,
+        },
+        pitch: predominantPitch,
+        wasteFactor: 15,
+        areasByPitch: test.measurements.areasByPitch.map(p => ({
+          pitch: p.pitch,
+          area: Math.round(p.area),
+          squares: Number((Math.round(p.area) / 100).toFixed(1)),
+          percentage: p.percentage,
+        })),
+        propertyDetails: {
+          stories: test.structure.stories || 1,
+          estimatedAtticArea: 0,
+          structureComplexity: 'Moderate',
+          roofAccessibility: 'Moderate',
+          chimneys: 0,
+          skylights: 0,
+          vents: 0,
+        },
+        reportSummary: {
+          totalPerimeter: 0,
+          averagePitch: predominantPitch,
+          roofComplexityScore: 0,
+        },
+      } as const;
+
+      const aiArea = Math.max(1, Math.round(currentPrediction.prediction.totalArea || 0));
+      const areaErrorPercent = Number((Math.abs(aiArea - totalArea) / totalArea * 100).toFixed(1));
+
+      const comparison = {
+        areaErrorPercent,
+        facetAccuracy: 80,
+        measurementAccuracy: 85,
+        missedFeatures: [],
+        overallScore: Math.max(0, Number((100 - areaErrorPercent).toFixed(1))),
+      };
+
+      const fakeResponse = { validationData, comparison };
+      await handleDualUpload(fakeResponse, 'roof');
+
+      setTestReportLoaded(true);
+      toast({
+        title: 'Test Report Loaded',
+        description: `EagleView data for ${test.address} ready for comparison`,
+      });
+    } catch (e) {
+      console.error('LoadTestReport error:', e);
+      toast({ title: 'Failed to load test report', description: 'Please try again.', variant: 'destructive' });
     }
   };
 
@@ -316,6 +397,17 @@ export const BetaTestingDashboard: React.FC = () => {
                     predictionId={currentPrediction.id}
                     onUploadComplete={handleDualUpload}
                   />
+                  <div className="mt-4 flex items-center gap-3">
+                    <Button variant="outline" onClick={loadTestReport} className="border-dashed">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Load Sample EagleView Report
+                    </Button>
+                    {testReportLoaded && (
+                      <Badge variant="outline" className="text-xs">
+                        Test report loaded: {TEST_EAGLEVIEW_REPORT.address}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </Card>
             )}
