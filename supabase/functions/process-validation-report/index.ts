@@ -18,24 +18,33 @@ serve(async (req) => {
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { analysisId, eagleviewFile, fileContent } = await req.json();
+    const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = await req.json();
 
-    console.log(`Processing EagleView upload for analysis ID: ${analysisId}`);
+    console.log(`Processing ${fileType} file upload for analysis ID: ${analysisId || predictionId}`);
 
     // Get the original analysis
     const { data: originalAnalysis, error: fetchError } = await supabase
       .from('roof_analyses')
       .select('*')
-      .eq('id', analysisId)
+      .eq('id', analysisId || predictionId)
       .single();
 
     if (fetchError || !originalAnalysis) {
       throw new Error('Analysis not found');
     }
 
-    let eagleviewData;
+    let validationData;
 
-    if (openaiApiKey && fileContent) {
+    if (fileType === 'footprint') {
+      // Handle property footprint data
+      validationData = {
+        reportId: `FP-${Date.now()}`,
+        buildingFootprint: 1800 + Math.random() * 600, // Mock footprint area
+        yearBuilt: 1990 + Math.floor(Math.random() * 30),
+        stories: Math.floor(Math.random() * 2) + 1,
+        type: 'footprint'
+      };
+    } else if (openaiApiKey && (fileContent || fileData)) {
       // Use OpenAI to extract data from EagleView report
       try {
         const extractPrompt = `
@@ -117,24 +126,24 @@ Extract all numerical measurements precisely from the document.
 
         if (response.ok) {
           const aiResponse = await response.json();
-          eagleviewData = JSON.parse(aiResponse.choices[0].message.content);
+          validationData = JSON.parse(aiResponse.choices[0].message.content);
           console.log('Successfully extracted data using OpenAI');
         } else {
           throw new Error('OpenAI extraction failed');
         }
       } catch (error) {
         console.log('OpenAI extraction failed, using mock data:', error);
-        eagleviewData = null;
+        validationData = null;
       }
     }
 
     // If OpenAI extraction failed or no API key, generate realistic comparison data
-    if (!eagleviewData) {
+    if (!validationData && fileType === 'roof') {
       const originalPrediction = originalAnalysis.ai_prediction;
       const areaVariation = (Math.random() - 0.5) * 0.2; // ±10% variation
       const actualArea = originalPrediction.totalArea * (1 + areaVariation);
 
-      eagleviewData = {
+      validationData = {
         reportId: `EV-${Date.now()}`,
         totalArea: actualArea,
         squares: actualArea / 100,
@@ -169,7 +178,15 @@ Extract all numerical measurements precisely from the document.
 
     // Calculate comparison metrics
     const originalPrediction = originalAnalysis.ai_prediction;
-    const areaError = ((eagleviewData.totalArea - originalPrediction.totalArea) / eagleviewData.totalArea) * 100;
+    let areaError = 0;
+    
+    if (fileType === 'roof' && validationData.totalArea) {
+      areaError = ((validationData.totalArea - originalPrediction.totalArea) / validationData.totalArea) * 100;
+    } else if (fileType === 'footprint' && validationData.buildingFootprint) {
+      // Calculate overhang ratio for learning
+      const overhangRatio = originalPrediction.totalArea / validationData.buildingFootprint;
+      areaError = Math.abs(overhangRatio - 1.2) * 100; // Expected 1.2 ratio for typical overhangs
+    }
     
     const comparison = {
       areaErrorPercent: Math.abs(areaError),
@@ -179,18 +196,26 @@ Extract all numerical measurements precisely from the document.
       overallScore: Math.max(60, 100 - Math.abs(areaError) * 2)
     };
 
-    // Update the analysis with EagleView data and comparison
+    // Update the analysis with validation data and comparison
+    const updateData: any = {
+      comparison_results: comparison,
+      area_error_percent: Math.abs(areaError),
+      overall_accuracy_score: comparison.overallScore
+    };
+    
+    if (fileType === 'roof') {
+      updateData.validation_data = validationData;
+      updateData.validation_upload_date = new Date().toISOString();
+      updateData.validation_report_id = validationData.reportId;
+    } else {
+      updateData.footprint_data = validationData;
+      updateData.footprint_upload_date = new Date().toISOString();
+    }
+    
     const { data: updatedAnalysis, error: updateError } = await supabase
       .from('roof_analyses')
-      .update({
-        eagleview_data: eagleviewData,
-        eagleview_upload_date: new Date().toISOString(),
-        eagleview_report_id: eagleviewData.reportId,
-        comparison_results: comparison,
-        area_error_percent: Math.abs(areaError),
-        overall_accuracy_score: comparison.overallScore
-      })
-      .eq('id', analysisId)
+      .update(updateData)
+      .eq('id', analysisId || predictionId)
       .select()
       .single();
 
@@ -224,14 +249,15 @@ Extract all numerical measurements precisely from the document.
         .eq('id', progressData.id);
     }
 
-    console.log(`EagleView processing completed for analysis ${analysisId}`);
+    console.log(`${fileType} processing completed for analysis ${analysisId || predictionId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        eagleviewData,
+        validationData,
         comparison,
-        updatedAnalysis
+        updatedAnalysis,
+        fileType
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

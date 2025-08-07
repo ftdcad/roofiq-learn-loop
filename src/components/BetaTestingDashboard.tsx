@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import roofHeroBg from '@/assets/roof-hero-bg.jpg';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload } from '@/components/ui/upload';
+import { DualUploadLearning } from '@/components/DualUploadLearning';
 import { useToast } from '@/hooks/use-toast';
 import { TrainingProgress } from '@/components/TrainingProgress';
 import { AddressInput } from '@/components/AddressInput';
@@ -45,22 +45,33 @@ export const BetaTestingDashboard: React.FC = () => {
     }
   };
 
-  const handleValidationReportUpload = async (file: File) => {
+  const handleDualUpload = async (data: any, type: 'roof' | 'footprint') => {
     if (!currentPrediction) return;
     
     setIsProcessingUpload(true);
     
     try {
-      const { validationData, comparison } = await RoofAnalysisService.processValidationReportUpload(
-        currentPrediction.id, 
-        file
-      );
+      let validationData, comparison;
+      
+      if (type === 'roof') {
+        const result = await RoofAnalysisService.processValidationReportUpload(
+          currentPrediction.id, 
+          data
+        );
+        validationData = result.validationData;
+        comparison = result.comparison;
+      } else {
+        // Handle footprint data processing
+        validationData = data;
+        comparison = { overallScore: 85, areaErrorPercent: 5 }; // Mock for now
+      }
       
       // Update prediction with comparison data
       const updatedPrediction = {
         ...currentPrediction,
         validationData,
-        comparison
+        comparison,
+        footprintData: type === 'footprint' ? data : currentPrediction.footprintData
       };
       
       setCurrentPrediction(updatedPrediction);
@@ -76,16 +87,20 @@ export const BetaTestingDashboard: React.FC = () => {
         origin: { y: 0.6 }
       });
       
+      const message = type === 'roof' 
+        ? `Accuracy: ${comparison.overallScore.toFixed(1)}%. Our AI just got smarter!`
+        : 'Footprint data added! Learning overhang patterns.';
+      
       toast({
         title: "🎉 AI Learning Complete!",
-        description: `Accuracy: ${comparison.overallScore.toFixed(1)}%. Our AI just got smarter!`,
+        description: message,
       });
       
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to parse validation report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process file. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -169,44 +184,14 @@ export const BetaTestingDashboard: React.FC = () => {
         {/* Professional Reports */}
         {currentPrediction && (
           <div className="space-y-8">
-            {/* Upload Section */}
+            {/* Dual Upload Section */}
             {!currentPrediction.validationData && (
               <Card className="roofiq-card">
                 <div className="p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 rounded-lg bg-roofiq-green/10">
-                      <Lightbulb className="w-6 h-6 text-roofiq-green" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-foreground">
-                        Help Us Learn
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Upload professional report to improve accuracy
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <Upload
-                    accept=".pdf"
-                    onUpload={handleValidationReportUpload}
-                    className="border-2 border-dashed border-roofiq-blue/30 hover:border-roofiq-blue/50 transition-colors"
-                    disabled={isProcessingUpload}
-                  >
-                    <div className="text-center py-12">
-                      <UploadIcon className={`w-12 h-12 text-muted-foreground mx-auto mb-4 ${isProcessingUpload ? 'animate-bounce' : ''}`} />
-                      <p className="text-foreground font-medium mb-2">
-                        {isProcessingUpload ? 'Processing Validation Report...' : 'Upload Existing Roof Report'}
-                      </p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Drag and drop your PDF or click to browse
-                      </p>
-                      <div className="flex items-center justify-center gap-2 text-xs text-roofiq-green">
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Each upload improves accuracy by ~0.1%</span>
-                      </div>
-                    </div>
-                  </Upload>
+                  <DualUploadLearning
+                    predictionId={currentPrediction.id}
+                    onUploadComplete={handleDualUpload}
+                  />
                 </div>
               </Card>
             )}

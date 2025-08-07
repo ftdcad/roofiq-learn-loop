@@ -98,6 +98,14 @@ export interface RoofPrediction {
       roofComplexityScore: number;
     };
   };
+
+  footprintData?: {
+    reportId: string;
+    buildingFootprint: number;
+    yearBuilt: number;
+    stories: number;
+    type: 'footprint';
+  };
   
   comparison?: {
     areaErrorPercent: number;
