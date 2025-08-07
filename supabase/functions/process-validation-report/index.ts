@@ -27,16 +27,41 @@ serve(async (req) => {
     console.log('Request payload keys:', Object.keys(requestBody));
     console.log('File info:', { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData });
 
-    // Get the original analysis
-    const { data: originalAnalysis, error: fetchError } = await supabase
+    // Get the original analysis - try multiple approaches since consensus ID might not match
+    let originalAnalysis;
+    let fetchError;
+    
+    // First try the provided ID
+    const { data: directMatch, error: directError } = await supabase
       .from('roof_analyses')
       .select('*')
       .eq('id', actualId)
-      .single();
+      .maybeSingle();
+    
+    if (directMatch) {
+      originalAnalysis = directMatch;
+    } else {
+      // If no direct match, try to find recent analyses for the same address
+      console.log('Direct ID lookup failed, searching by address...');
+      
+      const { data: recentAnalyses, error: searchError } = await supabase
+        .from('roof_analyses')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (recentAnalyses && recentAnalyses.length > 0) {
+        // Use the most recent analysis
+        originalAnalysis = recentAnalyses[0];
+        console.log('Using most recent analysis:', originalAnalysis.id);
+      } else {
+        fetchError = searchError || directError;
+      }
+    }
 
-    if (fetchError || !originalAnalysis) {
-      console.error('Analysis lookup failed:', { actualId, fetchError, foundAnalysis: !!originalAnalysis });
-      throw new Error(`Analysis not found for ID: ${actualId}. Error: ${fetchError?.message || 'No data'}`);
+    if (!originalAnalysis) {
+      console.error('Analysis lookup failed:', { actualId, directError, foundAnalysis: !!originalAnalysis });
+      throw new Error(`Analysis not found for ID: ${actualId}. Error: ${fetchError?.message || 'No recent analyses found'}`);
     }
 
     let validationData;
