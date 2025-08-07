@@ -13,6 +13,26 @@ export interface RoofMeasurements {
   hips: number;
   rakes: number;
   eaves: number;
+  gutters: number;
+  stepFlashing: number;
+  drip: number;
+}
+
+export interface AreasByPitch {
+  pitch: string;
+  area: number;
+  squares: number;
+  percentage: number;
+}
+
+export interface PropertyDetails {
+  stories: number;
+  estimatedAtticArea: number;
+  structureComplexity: 'Simple' | 'Moderate' | 'Complex' | 'Very Complex';
+  roofAccessibility: 'Easy' | 'Moderate' | 'Difficult';
+  chimneys: number;
+  skylights: number;
+  vents: number;
 }
 
 export interface RoofPrediction {
@@ -30,6 +50,13 @@ export interface RoofPrediction {
     predominantPitch: string;
     wasteFactor: number;
     confidence: number;
+    areasByPitch: AreasByPitch[];
+    propertyDetails: PropertyDetails;
+    reportSummary: {
+      totalPerimeter: number;
+      averagePitch: string;
+      roofComplexityScore: number;
+    };
   };
   
   eagleViewData?: {
@@ -41,6 +68,13 @@ export interface RoofPrediction {
     measurements: RoofMeasurements;
     pitch: string;
     wasteFactor: number;
+    areasByPitch: AreasByPitch[];
+    propertyDetails: PropertyDetails;
+    reportSummary: {
+      totalPerimeter: number;
+      averagePitch: string;
+      roofComplexityScore: number;
+    };
   };
   
   comparison?: {

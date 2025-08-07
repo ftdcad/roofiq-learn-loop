@@ -25,11 +25,33 @@ export const generateMockPrediction = (address: string): RoofPrediction => {
         valleys: Math.floor(Math.random() * 30) + 10,
         hips: Math.floor(Math.random() * 40) + 20,
         rakes: Math.floor(Math.random() * 60) + 40,
-        eaves: Math.floor(Math.random() * 80) + 60
+        eaves: Math.floor(Math.random() * 80) + 60,
+        gutters: Math.floor(Math.random() * 70) + 50,
+        stepFlashing: Math.floor(Math.random() * 25) + 15,
+        drip: Math.floor(Math.random() * 90) + 70
       },
       predominantPitch: ['6/12', '8/12', '10/12'][Math.floor(Math.random() * 3)],
       wasteFactor: 15 + Math.random() * 5,
-      confidence: 70 + Math.random() * 25
+      confidence: 70 + Math.random() * 25,
+      areasByPitch: [
+        { pitch: '6/12', area: baseArea * 0.4, squares: (baseArea * 0.4) / 100, percentage: 40 },
+        { pitch: '8/12', area: baseArea * 0.35, squares: (baseArea * 0.35) / 100, percentage: 35 },
+        { pitch: '10/12', area: baseArea * 0.25, squares: (baseArea * 0.25) / 100, percentage: 25 }
+      ],
+      propertyDetails: {
+        stories: Math.floor(Math.random() * 2) + 1,
+        estimatedAtticArea: Math.floor(baseArea * 0.8),
+        structureComplexity: ['Simple', 'Moderate', 'Complex'][Math.floor(Math.random() * 3)] as any,
+        roofAccessibility: ['Easy', 'Moderate', 'Difficult'][Math.floor(Math.random() * 3)] as any,
+        chimneys: Math.floor(Math.random() * 3),
+        skylights: Math.floor(Math.random() * 4),
+        vents: Math.floor(Math.random() * 8) + 2
+      },
+      reportSummary: {
+        totalPerimeter: Math.floor(Math.random() * 200) + 150,
+        averagePitch: ['6/12', '8/12', '10/12'][Math.floor(Math.random() * 3)],
+        roofComplexityScore: Math.floor(Math.random() * 40) + 60
+      }
     }
   };
 };
@@ -52,10 +74,26 @@ export const generateMockComparison = (prediction: RoofPrediction) => {
       valleys: prediction.prediction.measurements.valleys + Math.floor((Math.random() - 0.5) * 10),
       hips: prediction.prediction.measurements.hips + Math.floor((Math.random() - 0.5) * 15),
       rakes: prediction.prediction.measurements.rakes + Math.floor((Math.random() - 0.5) * 25),
-      eaves: prediction.prediction.measurements.eaves + Math.floor((Math.random() - 0.5) * 30)
+      eaves: prediction.prediction.measurements.eaves + Math.floor((Math.random() - 0.5) * 30),
+      gutters: prediction.prediction.measurements.gutters + Math.floor((Math.random() - 0.5) * 20),
+      stepFlashing: prediction.prediction.measurements.stepFlashing + Math.floor((Math.random() - 0.5) * 8),
+      drip: prediction.prediction.measurements.drip + Math.floor((Math.random() - 0.5) * 25)
     },
     pitch: prediction.prediction.predominantPitch,
-    wasteFactor: prediction.prediction.wasteFactor + Math.floor((Math.random() - 0.5) * 4)
+    wasteFactor: prediction.prediction.wasteFactor + Math.floor((Math.random() - 0.5) * 4),
+    areasByPitch: prediction.prediction.areasByPitch.map(area => ({
+      ...area,
+      area: area.area * (0.95 + Math.random() * 0.1),
+      squares: (area.area * (0.95 + Math.random() * 0.1)) / 100
+    })),
+    propertyDetails: {
+      ...prediction.prediction.propertyDetails,
+      estimatedAtticArea: prediction.prediction.propertyDetails.estimatedAtticArea + Math.floor((Math.random() - 0.5) * 200)
+    },
+    reportSummary: {
+      ...prediction.prediction.reportSummary,
+      totalPerimeter: prediction.prediction.reportSummary.totalPerimeter + Math.floor((Math.random() - 0.5) * 40)
+    }
   };
 
   const comparison = {

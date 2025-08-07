@@ -7,6 +7,7 @@ import { TrainingProgress } from '@/components/TrainingProgress';
 import { AddressInput } from '@/components/AddressInput';
 import { RoofVisualization } from '@/components/RoofVisualization';
 import { ComparisonMetrics } from '@/components/ComparisonMetrics';
+import { ProfessionalReportView } from '@/components/ProfessionalReportView';
 import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle } from 'lucide-react';
 import { RoofPrediction } from '@/types/roof-analysis';
 import { generateMockPrediction, generateMockComparison, getMockTrainingProgress } from '@/services/mockData';
@@ -132,94 +133,100 @@ export const BetaTestingDashboard: React.FC = () => {
           isLoading={isAnalyzing}
         />
 
-        {/* Results Grid */}
+        {/* Professional Reports */}
         {currentPrediction && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* AI Prediction */}
-            <Card className="roofiq-card">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-semibold text-foreground">
-                    RoofIQ Analysis
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-roofiq-green animate-pulse"></div>
-                    <span className="text-sm text-muted-foreground">AI Active</span>
+          <div className="space-y-8">
+            {/* Upload Section */}
+            {!currentPrediction.eagleViewData && (
+              <Card className="roofiq-card">
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-lg bg-roofiq-green/10">
+                      <Lightbulb className="w-6 h-6 text-roofiq-green" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        Help Us Learn
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Upload EagleView report to improve accuracy
+                      </p>
+                    </div>
                   </div>
+                  
+                  <Upload
+                    accept=".pdf"
+                    onUpload={handleEagleViewUpload}
+                    className="border-2 border-dashed border-roofiq-blue/30 hover:border-roofiq-blue/50 transition-colors"
+                    disabled={isProcessingUpload}
+                  >
+                    <div className="text-center py-12">
+                      <UploadIcon className={`w-12 h-12 text-muted-foreground mx-auto mb-4 ${isProcessingUpload ? 'animate-bounce' : ''}`} />
+                      <p className="text-foreground font-medium mb-2">
+                        {isProcessingUpload ? 'Processing EagleView Report...' : 'Upload EagleView Report'}
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Drag and drop your PDF or click to browse
+                      </p>
+                      <div className="flex items-center justify-center gap-2 text-xs text-roofiq-green">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Each upload improves accuracy by ~0.1%</span>
+                      </div>
+                    </div>
+                  </Upload>
                 </div>
-                
-                <RoofVisualization 
+              </Card>
+            )}
+
+            {/* Comparison Results */}
+            {currentPrediction.eagleViewData && currentPrediction.comparison && (
+              <Card className="roofiq-card">
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 rounded-lg bg-roofiq-green/10">
+                      <CheckCircle className="w-6 h-6 text-roofiq-green" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        Comparison Results
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Analysis vs EagleView Report #{currentPrediction.eagleViewData.reportId}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <ComparisonMetrics 
+                    prediction={currentPrediction.prediction}
+                    actual={currentPrediction.eagleViewData}
+                    comparison={currentPrediction.comparison}
+                  />
+                </div>
+              </Card>
+            )}
+
+            {/* Side-by-Side Professional Reports */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+              {/* RoofIQ Report */}
+              <div>
+                <ProfessionalReportView 
                   prediction={currentPrediction}
-                  showConfidence={true}
+                  isEagleView={false}
+                  title="RoofIQ AI Analysis Report"
                 />
               </div>
-            </Card>
 
-            {/* EagleView Upload or Comparison */}
-            <Card className="roofiq-card">
-              <div className="p-6">
-                {!currentPrediction.eagleViewData ? (
-                  <>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-roofiq-green/10">
-                        <Lightbulb className="w-6 h-6 text-roofiq-green" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground">
-                          Help Us Learn
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Upload EagleView report to improve accuracy
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <Upload
-                      accept=".pdf"
-                      onUpload={handleEagleViewUpload}
-                      className="border-2 border-dashed border-roofiq-blue/30 hover:border-roofiq-blue/50 transition-colors"
-                      disabled={isProcessingUpload}
-                    >
-                      <div className="text-center py-12">
-                        <UploadIcon className={`w-12 h-12 text-muted-foreground mx-auto mb-4 ${isProcessingUpload ? 'animate-bounce' : ''}`} />
-                        <p className="text-foreground font-medium mb-2">
-                          {isProcessingUpload ? 'Processing EagleView Report...' : 'Upload EagleView Report'}
-                        </p>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Drag and drop your PDF or click to browse
-                        </p>
-                        <div className="flex items-center justify-center gap-2 text-xs text-roofiq-green">
-                          <CheckCircle className="w-4 h-4" />
-                          <span>Each upload improves accuracy by ~0.1%</span>
-                        </div>
-                      </div>
-                    </Upload>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 rounded-lg bg-roofiq-green/10">
-                        <CheckCircle className="w-6 h-6 text-roofiq-green" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground">
-                          Comparison Results
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Analysis vs EagleView Report #{currentPrediction.eagleViewData.reportId}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <ComparisonMetrics 
-                      prediction={currentPrediction.prediction}
-                      actual={currentPrediction.eagleViewData}
-                      comparison={currentPrediction.comparison}
-                    />
-                  </>
-                )}
-              </div>
-            </Card>
+              {/* EagleView Report */}
+              {currentPrediction.eagleViewData && (
+                <div>
+                  <ProfessionalReportView 
+                    prediction={currentPrediction}
+                    isEagleView={true}
+                    title="EagleView Professional Report"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 

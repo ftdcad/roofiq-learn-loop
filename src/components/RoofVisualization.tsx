@@ -104,9 +104,17 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
             <span className="text-muted-foreground">Rakes:</span>
             <span className="font-mono text-foreground">{pred.measurements.rakes} ft</span>
           </div>
-          <div className="flex justify-between col-span-2">
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Eaves:</span>
             <span className="font-mono text-foreground">{pred.measurements.eaves} ft</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Gutters:</span>
+            <span className="font-mono text-foreground">{pred.measurements.gutters} ft</span>
+          </div>
+          <div className="flex justify-between col-span-2">
+            <span className="text-muted-foreground">Step Flashing:</span>
+            <span className="font-mono text-foreground">{pred.measurements.stepFlashing} ft</span>
           </div>
         </div>
       </div>
