@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import roofHeroBg from '@/assets/roof-hero-bg.jpg';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DualUploadLearning } from '@/components/DualUploadLearning';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +10,9 @@ import { AIStatusIndicator } from '@/components/AIStatusIndicator';
 import { RoofVisualization } from '@/components/RoofVisualization';
 import { ComparisonMetrics } from '@/components/ComparisonMetrics';
 import { ProfessionalReportView } from '@/components/ProfessionalReportView';
+import { RoofSketch } from '@/components/RoofSketch';
 import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle } from 'lucide-react';
-import { RoofPrediction } from '@/types/roof-analysis';
+import { RoofPrediction, RoofFacet } from '@/types/roof-analysis';
 import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
 
@@ -123,6 +124,58 @@ export const BetaTestingDashboard: React.FC = () => {
     loadTrainingProgress();
   }, []);
 
+  // Build facets for diagram (fallback to simple rectangle split if missing)
+  function buildFallbackFacets(totalArea: number, totalPerimeter?: number, predominantPitch?: string): RoofFacet[] {
+    const A = Math.max(totalArea, 1);
+    if (!totalPerimeter || totalPerimeter <= 0) {
+      const s = Math.sqrt(A);
+      const half = s / 2;
+      const left: RoofFacet = {
+        id: 'fallback-left',
+        polygon: [[0,0],[half,0],[half,s],[0,s]],
+        area: A / 2,
+        pitch: predominantPitch || '6/12',
+        type: 'main',
+        confidence: 0.2,
+      };
+      const right: RoofFacet = {
+        id: 'fallback-right',
+        polygon: [[half,0],[s,0],[s,s],[half,s]],
+        area: A / 2,
+        pitch: predominantPitch || '6/12',
+        type: 'main',
+        confidence: 0.2,
+      };
+      return [left, right];
+    }
+    const P = totalPerimeter;
+    const halfP = P / 2;
+    const disc = halfP * halfP - 4 * A;
+    let a: number, b: number;
+    if (disc > 0) {
+      const sqrtD = Math.sqrt(disc);
+      a = (halfP + sqrtD) / 2;
+      b = (halfP - sqrtD) / 2;
+    } else {
+      a = halfP / 2;
+      b = halfP / 2;
+    }
+    const halfA = a / 2;
+    const left: RoofFacet = { id: 'fallback-left', polygon: [[0,0],[halfA,0],[halfA,b],[0,b]], area: A / 2, pitch: predominantPitch || '6/12', type: 'main', confidence: 0.2 };
+    const right: RoofFacet = { id: 'fallback-right', polygon: [[halfA,0],[a,0],[a,b],[halfA,b]], area: A / 2, pitch: predominantPitch || '6/12', type: 'main', confidence: 0.2 };
+    return [left, right];
+  }
+
+  const baseFacets = currentPrediction?.prediction.facets ?? [];
+  const hasGeometry = baseFacets.length > 0 && baseFacets.every(f => Array.isArray(f.polygon) && f.polygon.length >= 3);
+  const diagramFacets: RoofFacet[] = hasGeometry
+    ? baseFacets
+    : buildFallbackFacets(
+        currentPrediction?.prediction.totalArea || 0,
+        currentPrediction?.prediction.reportSummary.totalPerimeter,
+        currentPrediction?.prediction.predominantPitch
+      );
+
   return (
     <div className="min-h-screen bg-gradient-background p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -226,7 +279,7 @@ export const BetaTestingDashboard: React.FC = () => {
               </Card>
             )}
 
-            {/* Side-by-Side Professional Reports */}
+            {/* Report + Technical Diagram */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               {/* RoofIQ Report */}
               <div>
@@ -237,16 +290,24 @@ export const BetaTestingDashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Professional Report */}
-              {currentPrediction.validationData && (
-                <div>
-                  <ProfessionalReportView 
-                    prediction={currentPrediction}
-                    isProfessionalReport={true}
-                    title="Professional Validation Report"
-                  />
-                </div>
-              )}
+              {/* Technical Roof Diagram */}
+              <div>
+                <Card className="sticky top-4">
+                  <CardHeader>
+                    <CardTitle>Technical Roof Diagram</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RoofSketch 
+                      facets={diagramFacets}
+                      perimeterFeet={currentPrediction.prediction.reportSummary.totalPerimeter}
+                      width={520}
+                      height={520}
+                      showLabels={true}
+                      showMeasurements={true}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         )}
