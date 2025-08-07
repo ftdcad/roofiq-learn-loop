@@ -8,9 +8,32 @@ export class RoofAnalysisService {
   static async analyzeRoof(address: string, satelliteImage?: string): Promise<RoofPrediction> {
     try {
       console.log('Starting enhanced dual-model roof analysis for:', address);
+
+      // 1) Validate and resolve address via geocoding for higher confidence
+      let resolvedAddress = address;
+      let coords: { lat: number; lng: number } = { lat: 40.7128, lng: -74.0060 };
+      try {
+        const { data, error } = await supabase.functions.invoke('geocode-address', {
+          body: { address, autocomplete: false, limit: 1 }
+        });
+        if (!error && data?.features?.length) {
+          const first = data.features[0];
+          // Mapbox returns [lng, lat]
+          if (Array.isArray(first.center) && first.center.length === 2) {
+            coords = { lat: first.center[1], lng: first.center[0] };
+          }
+          if (first.place_name) {
+            resolvedAddress = first.place_name;
+          }
+        } else if (error) {
+          console.warn('Geocode validation failed, proceeding with raw address:', error);
+        }
+      } catch (geoErr) {
+        console.warn('Geocode invocation error, proceeding with defaults:', geoErr);
+      }
       
-      // Use the new dual-model architecture
-      const consensus = await this.dualEngine.predict(address, satelliteImage);
+      // 2) Use the new dual-model architecture
+      const consensus = await this.dualEngine.predict(resolvedAddress, satelliteImage);
       
       console.log('RoofAnalysisService: Consensus received:', {
         hasFinalPrediction: !!consensus.finalPrediction,
@@ -24,14 +47,14 @@ export class RoofAnalysisService {
       // Convert consensus result to RoofPrediction format
       let prediction: RoofPrediction = {
         id: '',
-        address,
-        coordinates: { lat: 40.7128, lng: -74.0060 }, // Would be geocoded in production
+        address: resolvedAddress,
+        coordinates: coords, // from geocoding
         satelliteImage,
         predictionDate: new Date(),
         prediction: {
           facets: consensus.finalPrediction.facets || [],
           totalArea: consensus.finalPrediction.totalArea || 0,
-          squares: consensus.finalPrediction.squares || 0,
+          squares: Number(((consensus.finalPrediction.squares || 0)).toFixed(1)),
           measurements: consensus.finalPrediction.measurements || {
             ridges: 0,
             valleys: 0,
@@ -77,11 +100,14 @@ export class RoofAnalysisService {
       const { data: inserted, error: insertError } = await supabase
         .from('roof_analyses')
         .insert({
-          address,
-          coordinates: { lat: 40.7128, lng: -74.0060 } as any,
+          address: resolvedAddress,
+          coordinates: coords as any,
           ai_prediction: prediction.prediction as any,
           ai_confidence: prediction.prediction.confidence,
-          satellite_image_url: satelliteImage || null
+          satellite_image_url: satelliteImage || null,
+          model_agreement: consensus.modelAgreement,
+          consensus_confidence: consensus.confidence as any,
+          source: 'dual-model'
         })
         .select('id')
         .single();

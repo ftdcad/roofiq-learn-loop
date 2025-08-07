@@ -25,9 +25,10 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { address, satelliteImage } = await req.json();
+    const { address, satelliteImage, store = true, source = 'edge-analyze', correlationId } = await req.json();
 
     console.log(`Starting roof analysis for address: ${address}`);
+    if (correlationId) console.log(`CorrelationId: ${correlationId}`);
 
     const analysisPrompt = `
 You are a professional roof measurement AI analyzing the property at "${address}".
@@ -228,7 +229,15 @@ ANALYSIS APPROACH:
       throw new Error('Invalid AI response format');
     }
 
-    // Store the analysis in database
+    // Optionally store the analysis in database
+    if (store === false) {
+      console.log('Store disabled for this request. Returning prediction only.');
+      return new Response(
+        JSON.stringify({ success: true, prediction, analysisId: null, source, correlationId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { data: analysisData, error: dbError } = await supabase
       .from('roof_analyses')
       .insert({
@@ -236,7 +245,8 @@ ANALYSIS APPROACH:
         coordinates: { lat: 40.7128, lng: -74.0060 }, // Default coordinates, could be enhanced with geocoding
         satellite_image_url: satelliteImage,
         ai_prediction: prediction,
-        ai_confidence: prediction.confidence
+        ai_confidence: prediction.confidence,
+        source
       })
       .select()
       .single();
@@ -244,7 +254,7 @@ ANALYSIS APPROACH:
     if (dbError) {
       console.error('Database error:', dbError);
       return new Response(
-        JSON.stringify({ error: 'Failed to store analysis', details: dbError }),
+        JSON.stringify({ error: 'Failed to store analysis', details: dbError, correlationId }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -255,7 +265,9 @@ ANALYSIS APPROACH:
       JSON.stringify({
         success: true,
         prediction,
-        analysisId: analysisData.id
+        analysisId: analysisData.id,
+        source,
+        correlationId
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

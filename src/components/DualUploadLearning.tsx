@@ -33,6 +33,22 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
     setFile(file);
     setProgress(0);
 
+    // Validate file type and size
+    const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+    const isPdf = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+    const validForType = type === 'roof' ? isPdf : (isPdf || isImage);
+    if (!validForType) {
+      toast({ title: 'Invalid file type', description: type === 'roof' ? 'Please upload a PDF report' : 'Please upload a PDF or image file', variant: 'destructive' });
+      setUploading(false);
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast({ title: 'File too large', description: 'Maximum size is 10MB', variant: 'destructive' });
+      setUploading(false);
+      return;
+    }
+
     try {
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -122,18 +138,19 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
         setDragOver(false);
         
         const files = Array.from(e.dataTransfer.files);
-        const validFile = files.find(file => 
-          file.type === 'application/pdf' || 
-          file.type.startsWith('image/')
-        );
+        const validFile = files.find(file => {
+          const isPdf = file.type === 'application/pdf';
+          const isImage = file.type.startsWith('image/');
+          return type === 'roof' ? isPdf : (isPdf || isImage);
+        });
         
         if (validFile) {
           handleFileUpload(validFile, type);
         } else {
           toast({
-            title: "Invalid file type",
-            description: "Please upload a PDF or image file",
-            variant: "destructive",
+            title: 'Invalid file type',
+            description: type === 'roof' ? 'Please upload a PDF report' : 'Please upload a PDF or image file',
+            variant: 'destructive',
           });
         }
       }

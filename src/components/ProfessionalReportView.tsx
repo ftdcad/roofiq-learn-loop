@@ -88,7 +88,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               <span className="text-sm font-medium text-muted-foreground">Total Squares</span>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              {data.squares.toFixed(2)}
+              {data.squares.toFixed(1)}
             </div>
             <div className="text-sm text-muted-foreground">@ 100 sq ft each</div>
           </div>
@@ -108,7 +108,30 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
         </Card>
       </div>
 
-      {/* Areas by Pitch */}
+      {/* Model Consensus */}
+      {prediction.prediction?.dualModelMetadata && (
+        <Card className="roofiq-card">
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Model Agreement</div>
+              <div className="text-2xl font-bold text-foreground font-mono">
+                {Math.round((prediction.prediction.dualModelMetadata.modelAgreement || 0) * 100)}%
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground mb-1">Consensus Confidence</div>
+              <Badge variant="outline" className={`${
+                prediction.prediction.dualModelMetadata.confidence === 'high' ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
+                prediction.prediction.dualModelMetadata.confidence === 'medium' ? 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20' :
+                'bg-roofiq-red/10 text-roofiq-red border-roofiq-red/20'
+              }`}>
+                {prediction.prediction.dualModelMetadata.confidence}
+              </Badge>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <Card className="roofiq-card">
         <div className="p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Areas by Pitch</h3>

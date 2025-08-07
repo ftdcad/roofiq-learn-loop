@@ -141,14 +141,17 @@ export type Database = {
           ai_prediction: Json
           area_error_percent: number | null
           comparison_results: Json | null
+          consensus_confidence: string | null
           coordinates: Json
           created_at: string
           footprint_data: Json | null
           footprint_upload_date: string | null
           id: string
+          model_agreement: number | null
           overall_accuracy_score: number | null
           prediction_date: string
           satellite_image_url: string | null
+          source: string | null
           updated_at: string
           user_id: string | null
           validation_data: Json | null
@@ -161,14 +164,17 @@ export type Database = {
           ai_prediction: Json
           area_error_percent?: number | null
           comparison_results?: Json | null
+          consensus_confidence?: string | null
           coordinates: Json
           created_at?: string
           footprint_data?: Json | null
           footprint_upload_date?: string | null
           id?: string
+          model_agreement?: number | null
           overall_accuracy_score?: number | null
           prediction_date?: string
           satellite_image_url?: string | null
+          source?: string | null
           updated_at?: string
           user_id?: string | null
           validation_data?: Json | null
@@ -181,14 +187,17 @@ export type Database = {
           ai_prediction?: Json
           area_error_percent?: number | null
           comparison_results?: Json | null
+          consensus_confidence?: string | null
           coordinates?: Json
           created_at?: string
           footprint_data?: Json | null
           footprint_upload_date?: string | null
           id?: string
+          model_agreement?: number | null
           overall_accuracy_score?: number | null
           prediction_date?: string
           satellite_image_url?: string | null
+          source?: string | null
           updated_at?: string
           user_id?: string | null
           validation_data?: Json | null
