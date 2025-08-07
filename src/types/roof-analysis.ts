@@ -57,6 +57,28 @@ export interface RoofPrediction {
       averagePitch: string;
       roofComplexityScore: number;
     };
+    // Enhanced dual-model metadata
+    dualModelMetadata?: {
+      modelAgreement: number;
+      confidence: 'high' | 'medium' | 'low';
+      reasoning: string;
+      learningFlag?: {
+        priority: 'high' | 'medium' | 'low';
+        reason: string;
+        suggestedAction: string;
+      };
+      visionModelStrength: number;
+      geometryModelStrength: number;
+      uncertaintyAnalysis: {
+        variance: number;
+        confidenceRange: {
+          min: number;
+          max: number;
+        };
+        riskFactors: string[];
+        needsVerification: boolean;
+      };
+    };
   };
   
   eagleViewData?: {

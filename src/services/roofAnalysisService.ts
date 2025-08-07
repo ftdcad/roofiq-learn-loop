@@ -1,39 +1,60 @@
 import { supabase } from '@/integrations/supabase/client';
 import { RoofPrediction, TrainingProgress } from '@/types/roof-analysis';
+import { DualLearningEngine } from './models/DualLearningEngine';
 
 export class RoofAnalysisService {
+  private static dualEngine = new DualLearningEngine();
+
   static async analyzeRoof(address: string, satelliteImage?: string): Promise<RoofPrediction> {
     try {
-      console.log('Starting roof analysis for:', address);
+      console.log('Starting enhanced dual-model roof analysis for:', address);
       
-      const { data, error } = await supabase.functions.invoke('analyze-roof', {
-        body: { address, satelliteImage }
-      });
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Analysis failed: ${error.message}`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Analysis failed');
-      }
-
-      // Convert the response to our RoofPrediction format
+      // Use the new dual-model architecture
+      const consensus = await this.dualEngine.predict(address, satelliteImage);
+      
+      // Convert consensus result to RoofPrediction format
       const prediction: RoofPrediction = {
-        id: data.analysisId || crypto.randomUUID(),
+        id: crypto.randomUUID(),
         address,
-        coordinates: { lat: 40.7128, lng: -74.0060 }, // Default coordinates
+        coordinates: { lat: 40.7128, lng: -74.0060 }, // Would be geocoded in production
         satelliteImage,
         predictionDate: new Date(),
-        prediction: data.prediction
+        prediction: {
+          facets: consensus.finalPrediction.facets,
+          totalArea: consensus.finalPrediction.totalArea,
+          squares: consensus.finalPrediction.squares,
+          measurements: consensus.finalPrediction.measurements,
+          predominantPitch: consensus.finalPrediction.predominantPitch,
+          wasteFactor: consensus.finalPrediction.wasteFactor,
+          confidence: consensus.finalPrediction.confidence,
+          areasByPitch: consensus.finalPrediction.areasByPitch,
+          propertyDetails: consensus.finalPrediction.propertyDetails,
+          reportSummary: consensus.finalPrediction.reportSummary,
+          // Add dual-model specific metadata
+          dualModelMetadata: {
+            modelAgreement: consensus.modelAgreement,
+            confidence: consensus.confidence,
+            reasoning: consensus.reasoning,
+            learningFlag: consensus.learningFlag,
+            visionModelStrength: consensus.finalPrediction.dualModelInsights.visionModelStrength,
+            geometryModelStrength: consensus.finalPrediction.dualModelInsights.geometryModelStrength,
+            uncertaintyAnalysis: consensus.finalPrediction.uncertaintyAnalysis
+          }
+        }
       };
 
-      console.log('Roof analysis completed successfully');
+      console.log('Enhanced dual-model analysis completed with confidence:', consensus.confidence);
+      console.log('Model agreement level:', Math.round(consensus.modelAgreement * 100) + '%');
+      
+      // Log learning opportunities
+      if (consensus.learningFlag) {
+        console.log('🎯 Learning opportunity detected:', consensus.learningFlag.reason);
+      }
+
       return prediction;
 
     } catch (error) {
-      console.error('Error in roof analysis:', error);
+      console.error('Error in dual-model roof analysis:', error);
       throw error;
     }
   }
