@@ -13,36 +13,57 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔍 DETAILED DEBUG: Starting process-validation-report');
+    console.log('🔍 Environment check:', {
+      hasSupabaseUrl: !!Deno.env.get('SUPABASE_URL'),
+      hasSupabaseKey: !!Deno.env.get('SUPABASE_ANON_KEY'),
+      hasOpenAI: !!Deno.env.get('OPENAI_API_KEY')
+    });
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
+    console.log('🔍 Creating Supabase client...');
     const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    console.log('🔍 Parsing request body...');
     const requestBody = await req.json();
+    console.log('🔍 Request body parsed successfully:', Object.keys(requestBody));
+    
     const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = requestBody;
 
     // Use predictionId as the primary key (that's what we're actually sending)
     const actualId = predictionId || analysisId;
-    console.log(`Processing ${fileType} file upload for analysis ID: ${actualId}`);
-    console.log('Request payload keys:', Object.keys(requestBody));
-    console.log('File info:', { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData });
+    console.log(`🔍 Processing ${fileType} file upload for analysis ID: ${actualId}`);
+    console.log('🔍 Request payload keys:', Object.keys(requestBody));
+    console.log('🔍 File info:', { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData });
 
+    console.log('🔍 Starting database lookup...');
     // Get the original analysis - try multiple approaches since consensus ID might not match
     let originalAnalysis;
     let fetchError;
     
     // First try the provided ID
+    console.log('🔍 Attempting direct ID lookup for:', actualId);
     const { data: directMatch, error: directError } = await supabase
       .from('roof_analyses')
       .select('*')
       .eq('id', actualId)
       .maybeSingle();
     
+    console.log('🔍 Direct lookup result:', { 
+      foundMatch: !!directMatch, 
+      hasError: !!directError,
+      errorDetails: directError 
+    });
+    
     if (directMatch) {
       originalAnalysis = directMatch;
+      console.log('🔍 SUCCESS: Found analysis via direct ID lookup');
     } else {
       // If no direct match, try to find recent analyses for the same address
-      console.log('Direct ID lookup failed, searching by address...');
+      console.log('🔍 Direct ID lookup failed, searching by recent analyses...');
       
       const { data: recentAnalyses, error: searchError } = await supabase
         .from('roof_analyses')
@@ -50,19 +71,33 @@ serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(5);
       
+      console.log('🔍 Recent analyses search result:', { 
+        count: recentAnalyses?.length || 0,
+        hasError: !!searchError,
+        errorDetails: searchError
+      });
+      
       if (recentAnalyses && recentAnalyses.length > 0) {
         // Use the most recent analysis
         originalAnalysis = recentAnalyses[0];
-        console.log('Using most recent analysis:', originalAnalysis.id);
+        console.log('🔍 SUCCESS: Using most recent analysis:', originalAnalysis.id);
       } else {
         fetchError = searchError || directError;
+        console.log('🔍 FAILED: No analyses found');
       }
     }
 
     if (!originalAnalysis) {
-      console.error('Analysis lookup failed:', { actualId, directError, foundAnalysis: !!originalAnalysis });
+      console.error('🚨 CRITICAL ERROR: Analysis lookup completely failed:', { 
+        actualId, 
+        directError, 
+        fetchError,
+        foundAnalysis: !!originalAnalysis 
+      });
       throw new Error(`Analysis not found for ID: ${actualId}. Error: ${fetchError?.message || 'No recent analyses found'}`);
     }
+    
+    console.log('🔍 Successfully found analysis, proceeding with processing...');
 
     let validationData;
 
@@ -243,14 +278,24 @@ Extract all numerical measurements precisely from the document.
       updateData.footprint_upload_date = new Date().toISOString();
     }
     
+    console.log('🔍 Attempting to update analysis with ID:', originalAnalysis.id);
+    console.log('🔍 Update data structure:', updateData);
+    
     const { data: updatedAnalysis, error: updateError } = await supabase
       .from('roof_analyses')
       .update(updateData)
-      .eq('id', actualId)
+      .eq('id', originalAnalysis.id) // Use the actual found analysis ID, not the passed ID
       .select()
       .single();
 
+    console.log('🔍 Update result:', { 
+      hasUpdatedData: !!updatedAnalysis, 
+      hasError: !!updateError,
+      errorDetails: updateError 
+    });
+
     if (updateError) {
+      console.error('🚨 Database update failed:', updateError);
       throw new Error(`Failed to update analysis: ${updateError.message}`);
     }
 
@@ -294,9 +339,18 @@ Extract all numerical measurements precisely from the document.
     );
 
   } catch (error) {
-    console.error('Error in process-eagleview function:', error);
+    console.error('🚨 CRITICAL ERROR in process-validation-report function:');
+    console.error('🚨 Error name:', error.name);
+    console.error('🚨 Error message:', error.message);
+    console.error('🚨 Error stack:', error.stack);
+    console.error('🚨 Full error object:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        errorType: error.name,
+        details: 'Check edge function logs for full error details'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
