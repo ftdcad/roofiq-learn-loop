@@ -21,25 +21,54 @@ serve(async (req) => {
     });
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    // Use service role for secure server-side access (bypass RLS and access private storage)
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    console.log('🔍 Creating Supabase client...');
+    console.log('🔍 Creating Supabase client (service role)...');
     const supabase = createClient(supabaseUrl, supabaseKey);
     
     console.log('🔍 Parsing request body...');
     const requestBody = await req.json();
     console.log('🔍 Request body parsed successfully:', Object.keys(requestBody));
     
-    const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = requestBody;
+    const {
+      analysisId,
+      predictionId,
+      fileName,
+      fileSize,
+      fileType = 'roof',
+      fileContent,
+      fileData,
+      storageBucket,
+      storagePath,
+      correlationId: incomingCorrelationId
+    } = requestBody;
+
+    const correlationId = incomingCorrelationId || (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
 
     // Use predictionId as the primary key (that's what we're actually sending)
     const actualId = predictionId || analysisId;
-    console.log(`🔍 Processing ${fileType} file upload for analysis ID: ${actualId}`);
-    console.log('🔍 Request payload keys:', Object.keys(requestBody));
-    console.log('🔍 File info:', { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData });
+    console.log(`[${correlationId}] 🔍 Processing ${fileType} file upload for analysis ID: ${actualId}`);
+    console.log(`[${correlationId}] 🔍 Request payload keys:`, Object.keys(requestBody));
+    console.log(`[${correlationId}] 🔍 File info:`, { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData, storageBucket, storagePath });
 
-    console.log('🔍 Starting database lookup...');
+    // If using Storage, attempt to download the file (for validation/logging; parsing is mocked for now)
+    if (storageBucket && storagePath) {
+      try {
+        const dl = await supabase.storage.from(storageBucket).download(storagePath);
+        if (dl.error) {
+          console.warn(`[${correlationId}] ⚠️ Storage download error:`, dl.error);
+        } else if (dl.data) {
+          const size = (dl.data as Blob).size;
+          console.log(`[${correlationId}] 📦 Storage file downloaded: ${storageBucket}/${storagePath} (${size} bytes)`);
+        }
+      } catch (e) {
+        console.warn(`[${correlationId}] ⚠️ Failed to download from storage:`, e);
+      }
+    }
+
+    console.log(`[${correlationId}] 🔍 Starting database lookup...`);
     // Get the original analysis - try multiple approaches since consensus ID might not match
     let originalAnalysis;
     let fetchError;
@@ -88,13 +117,20 @@ serve(async (req) => {
     }
 
     if (!originalAnalysis) {
-      console.error('🚨 CRITICAL ERROR: Analysis lookup completely failed:', { 
+      console.error(`[${correlationId}] 🚨 CRITICAL ERROR: Analysis lookup completely failed:`, { 
         actualId, 
         directError, 
         fetchError,
         foundAnalysis: !!originalAnalysis 
       });
-      throw new Error(`Analysis not found for ID: ${actualId}. Error: ${fetchError?.message || 'No recent analyses found'}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Analysis not found for ID: ${actualId}`,
+          correlationId
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
     console.log('🔍 Successfully found analysis, proceeding with processing...');
@@ -305,7 +341,7 @@ Extract all numerical measurements precisely from the document.
       .select('*')
       .order('last_updated', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (progressData) {
       const newTotalComparisons = progressData.total_comparisons + 1;
@@ -330,6 +366,7 @@ Extract all numerical measurements precisely from the document.
     return new Response(
       JSON.stringify({
         success: true,
+        correlationId,
         validationData,
         comparison,
         updatedAnalysis,
@@ -347,9 +384,11 @@ Extract all numerical measurements precisely from the document.
     
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: error.message,
         errorType: error.name,
-        details: 'Check edge function logs for full error details'
+        details: 'Check edge function logs for full error details',
+        correlationId
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

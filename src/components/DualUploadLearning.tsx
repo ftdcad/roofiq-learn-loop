@@ -45,13 +45,28 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
         });
       }, 200);
 
-      // Process the file with minimal payload
+      // 1) Upload the file to Supabase Storage (private bucket)
+      const bucket = 'validation-reports';
+      const storagePath = `${predictionId}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(storagePath, file, { contentType: file.type });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // 2) Notify the edge function with metadata only
+      const correlationId = crypto.randomUUID();
       const { data, error } = await supabase.functions.invoke('process-validation-report', {
         body: {
           analysisId: predictionId,
           fileName: file.name,
           fileSize: file.size,
-          fileType: type
+          fileType: type,
+          storageBucket: bucket,
+          storagePath,
+          correlationId
         }
       });
 
