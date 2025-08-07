@@ -6,6 +6,7 @@ import { DualUploadLearning } from '@/components/DualUploadLearning';
 import { useToast } from '@/hooks/use-toast';
 import { TrainingProgress } from '@/components/TrainingProgress';
 import { AddressInput } from '@/components/AddressInput';
+import { AIStatusIndicator } from '@/components/AIStatusIndicator';
 import { RoofVisualization } from '@/components/RoofVisualization';
 import { ComparisonMetrics } from '@/components/ComparisonMetrics';
 import { ProfessionalReportView } from '@/components/ProfessionalReportView';
@@ -174,6 +175,20 @@ export const BetaTestingDashboard: React.FC = () => {
 
         {/* Training Progress */}
         {trainingProgress && <TrainingProgress progress={trainingProgress} />}
+
+        {/* AI Status Indicator */}
+        <AIStatusIndicator 
+          prediction={currentPrediction} 
+          onStatusChange={(isWorking) => {
+            if (!isWorking) {
+              toast({
+                title: "⚠️ OpenAI Not Connected",
+                description: "System running in demo mode with mock data",
+                variant: "destructive"
+              });
+            }
+          }}
+        />
 
         {/* Address Input */}
         <AddressInput 
