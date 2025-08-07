@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import roofHeroBg from '@/assets/roof-hero-bg.jpg';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload } from '@/components/ui/upload';
@@ -99,29 +100,51 @@ export const BetaTestingDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-background p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <div className="p-3 rounded-xl bg-roofiq-blue/10 roofiq-glow">
-              <Sparkles className="w-8 h-8 text-roofiq-blue" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-foreground">
-                RoofIQ Learning Engine
-              </h1>
-              <div className="flex items-center justify-center gap-2 mt-1">
-                <span className="px-3 py-1 rounded-full bg-roofiq-amber/10 text-roofiq-amber text-sm font-medium border border-roofiq-amber/20">
-                  Beta
+        {/* Hero Section with Brand Identity */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-roofiq-blue via-roofiq-blue-dark to-background border border-roofiq-blue/20 shadow-2xl">
+          <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: `url(${roofHeroBg})`}}></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-roofiq-blue/80 via-roofiq-blue/60 to-transparent"></div>
+          
+          <div className="relative px-12 py-16 text-center">
+            <div className="space-y-6">
+              {/* Main Brand Title */}
+              <div className="space-y-2">
+                <h1 className="text-6xl font-bold text-white tracking-tight">
+                  RoofIQ
+                </h1>
+                <p className="text-xl text-white/90 font-medium">
+                  Roof measurement and analysis tool
+                </p>
+              </div>
+              
+              {/* Beta Badge and Status */}
+              <div className="flex items-center justify-center gap-4">
+                <span className="px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium border border-white/30">
+                  Beta Learning Engine
                 </span>
-                <span className="text-muted-foreground">•</span>
-                <span className="text-muted-foreground">Every comparison makes our AI smarter</span>
+                <span className="text-white/70">•</span>
+                <span className="text-white/90">Every comparison makes our AI smarter</span>
+              </div>
+              
+              {/* Value Proposition */}
+              <p className="text-lg text-white/80 max-w-3xl mx-auto leading-relaxed">
+                Advanced AI-powered roof measurement system that learns from professional EagleView reports. 
+                Target: <span className="text-roofiq-green-light font-semibold">95% accuracy</span> with 3,000+ comparisons.
+              </p>
+              
+              {/* Visual Elements */}
+              <div className="flex items-center justify-center gap-8 pt-4">
+                <div className="flex items-center gap-2 text-white/80">
+                  <div className="w-2 h-2 rounded-full bg-roofiq-green-light animate-pulse"></div>
+                  <span className="text-sm">AI Learning Active</span>
+                </div>
+                <div className="flex items-center gap-2 text-white/80">
+                  <Sparkles className="w-4 h-4 text-roofiq-amber" />
+                  <span className="text-sm">Professional Grade Analysis</span>
+                </div>
               </div>
             </div>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Advanced AI-powered roof measurement system that learns from professional EagleView reports. 
-            Target: <span className="text-roofiq-green font-semibold">95% accuracy</span> with 3,000+ comparisons.
-          </p>
         </div>
 
         {/* Training Progress */}

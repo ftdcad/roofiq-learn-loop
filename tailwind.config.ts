@@ -55,6 +55,7 @@ export default {
 				roofiq: {
 					blue: 'hsl(var(--roofiq-blue))',
 					'blue-dark': 'hsl(var(--roofiq-blue-dark))',
+					'blue-light': 'hsl(var(--roofiq-blue-light))',
 					green: 'hsl(var(--roofiq-green))',
 					'green-light': 'hsl(var(--roofiq-green-light))',
 					amber: 'hsl(var(--roofiq-amber))',
