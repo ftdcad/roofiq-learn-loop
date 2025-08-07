@@ -59,6 +59,8 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
   const isUsingMockData = prediction?.note?.includes("temporarily unavailable") || 
                          prediction?.note?.includes("enhanced AI prediction");
 
+  const connectionState = status === null ? 'idle' : status?.success ? 'ok' : 'error';
+
   return (
     <div className="space-y-4">
       {/* Status Alert */}
@@ -85,12 +87,12 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
       {/* Connection Status */}
       <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
         <div className="flex items-center gap-3">
-          {status?.working ? (
+          {connectionState === 'ok' ? (
             <Wifi className="w-5 h-5 text-roofiq-green" />
-          ) : status === null ? (
+          ) : connectionState === 'idle' ? (
             <div className="w-5 h-5 rounded-full bg-muted" />
           ) : (
-            <WifiOff className="w-5 h-5 text-roofiq-amber" />
+            <WifiOff className="w-5 h-5 text-destructive" />
           )}
           
           <div>
