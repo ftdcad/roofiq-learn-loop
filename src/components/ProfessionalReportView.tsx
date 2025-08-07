@@ -60,7 +60,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
             </div>
             <div>
               <span className="text-muted-foreground">Stories:</span>
-              <p className="font-medium text-foreground mt-1">{data.propertyDetails.stories}</p>
+              <p className="font-medium text-foreground mt-1">{data.propertyDetails?.stories ?? '-'}</p>
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               <span className="text-sm font-medium text-muted-foreground">Total Roof Area</span>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              {data.totalArea.toLocaleString()}
+              {Number((data.totalArea ?? 0)).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">square feet</div>
           </div>
@@ -88,7 +88,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               <span className="text-sm font-medium text-muted-foreground">Total Squares</span>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              {data.squares.toFixed(1)}
+              {Number(data.squares ?? 0).toFixed(1)}
             </div>
             <div className="text-sm text-muted-foreground">@ 100 sq ft each</div>
           </div>
@@ -101,7 +101,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               <span className="text-sm font-medium text-muted-foreground">Waste Factor</span>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              {data.wasteFactor.toFixed(1)}%
+              {Number(data.wasteFactor ?? 0).toFixed(1)}%
             </div>
             <div className="text-sm text-muted-foreground">recommended</div>
           </div>
@@ -149,14 +149,14 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
                 <TableRow key={index}>
                   <TableCell className="font-medium">{pitchArea.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {(pitchArea.area || 0).toLocaleString()}
+                    {Number(pitchArea.area ?? 0).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {(pitchArea.squares || 0).toFixed(2)}
+                    {Number(pitchArea.squares ?? 0).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className="font-mono">
-                      {pitchArea.percentage || 0}%
+                      {Number(pitchArea.percentage ?? 0)}%
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -205,35 +205,35 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div>
               <span className="text-sm text-muted-foreground">Number of Stories</span>
-              <p className="text-lg font-semibold text-foreground">{data.propertyDetails.stories}</p>
+              <p className="text-lg font-semibold text-foreground">{data.propertyDetails?.stories ?? '-'}</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Estimated Attic Area</span>
               <p className="text-lg font-semibold text-foreground font-mono">
-                {data.propertyDetails.estimatedAtticArea.toLocaleString()} sq ft
+                {Number(data.propertyDetails?.estimatedAtticArea ?? 0).toLocaleString()} sq ft
               </p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Structure Complexity</span>
               <Badge variant="outline" className={`mt-1 ${
-                data.propertyDetails.structureComplexity === 'Simple' ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
-                data.propertyDetails.structureComplexity === 'Complex' ? 'bg-roofiq-red/10 text-roofiq-red border-roofiq-red/20' :
+                (data.propertyDetails?.structureComplexity ?? 'Moderate') === 'Simple' ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
+                (data.propertyDetails?.structureComplexity ?? 'Moderate') === 'Complex' ? 'bg-roofiq-red/10 text-roofiq-red border-roofiq-red/20' :
                 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20'
               }`}>
-                {data.propertyDetails.structureComplexity}
+                {data.propertyDetails?.structureComplexity ?? 'Moderate'}
               </Badge>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Roof Accessibility</span>
-              <p className="text-lg font-semibold text-foreground">{data.propertyDetails.roofAccessibility}</p>
+              <p className="text-lg font-semibold text-foreground">{data.propertyDetails?.roofAccessibility ?? '-'}</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Chimneys</span>
-              <p className="text-lg font-semibold text-foreground">{data.propertyDetails.chimneys}</p>
+              <p className="text-lg font-semibold text-foreground">{data.propertyDetails?.chimneys ?? 0}</p>
             </div>
             <div>
               <span className="text-sm text-muted-foreground">Skylights</span>
-              <p className="text-lg font-semibold text-foreground">{data.propertyDetails.skylights}</p>
+              <p className="text-lg font-semibold text-foreground">{data.propertyDetails?.skylights ?? 0}</p>
             </div>
           </div>
 
@@ -243,7 +243,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
             <div>
               <span className="text-sm text-muted-foreground">Total Perimeter</span>
               <p className="text-lg font-semibold text-foreground font-mono">
-                {data.reportSummary.totalPerimeter} ft
+                {Number(data.reportSummary?.totalPerimeter ?? 0)} ft
               </p>
             </div>
             <div>
