@@ -29,11 +29,10 @@ serve(async (req) => {
 
     console.log(`Starting roof analysis for address: ${address}`);
 
-    // Analyze roof using GPT-4 Vision
     const analysisPrompt = `
-You are a professional roof measurement AI. Analyze this satellite image of a property at "${address}" and provide detailed roof measurements.
+You are a professional roof measurement AI. Analyze this property at "${address}" and provide detailed roof measurements.
 
-Return a JSON object with this EXACT structure:
+CRITICAL: Return ONLY valid JSON in this EXACT structure (no extra text, no markdown):
 {
   "totalArea": number (in square feet),
   "squares": number (totalArea / 100),
@@ -100,15 +99,15 @@ Important:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'gpt-4.1-2025-04-14',
           messages: [
             {
               role: 'system',
-              content: 'You are a professional roof measurement expert. Analyze satellite images and provide precise roof measurements and details.'
+              content: 'You are a professional roof measurement expert. Analyze satellite images and provide precise roof measurements and details in valid JSON format.'
             },
             {
               role: 'user',
-              content: [
+              content: satelliteImage ? [
                 {
                   type: 'text',
                   text: analysisPrompt
@@ -116,19 +115,22 @@ Important:
                 {
                   type: 'image_url',
                   image_url: {
-                    url: satelliteImage || 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='
+                    url: satelliteImage
                   }
                 }
-              ]
+              ] : analysisPrompt
             }
           ],
           max_tokens: 2000,
-          temperature: 0.1
+          temperature: 0.1,
+          response_format: { type: "json_object" }
         })
       });
 
       if (!openaiRequest.ok) {
-        throw new Error(`OpenAI API error: ${openaiRequest.status}`);
+        const errorData = await openaiRequest.json().catch(() => ({}));
+        console.error(`OpenAI API error ${openaiRequest.status}:`, errorData);
+        throw new Error(`OpenAI API error: ${openaiRequest.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
       openaiResponse = await openaiRequest.json();
