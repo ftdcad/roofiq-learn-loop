@@ -18,11 +18,14 @@ serve(async (req) => {
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = await req.json();
+    const requestBody = await req.json();
+    const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = requestBody;
 
     // Use predictionId as the primary key (that's what we're actually sending)
     const actualId = predictionId || analysisId;
     console.log(`Processing ${fileType} file upload for analysis ID: ${actualId}`);
+    console.log('Request payload keys:', Object.keys(requestBody));
+    console.log('File info:', { fileName, fileSize, fileType, hasContent: !!fileContent, hasData: !!fileData });
 
     // Get the original analysis
     const { data: originalAnalysis, error: fetchError } = await supabase
@@ -32,7 +35,8 @@ serve(async (req) => {
       .single();
 
     if (fetchError || !originalAnalysis) {
-      throw new Error('Analysis not found');
+      console.error('Analysis lookup failed:', { actualId, fetchError, foundAnalysis: !!originalAnalysis });
+      throw new Error(`Analysis not found for ID: ${actualId}. Error: ${fetchError?.message || 'No data'}`);
     }
 
     let validationData;
