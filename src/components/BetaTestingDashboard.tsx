@@ -17,6 +17,8 @@ import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
 import { MapboxService } from '@/services/mapboxService';
 import { RoofTraceOverlay } from '@/components/RoofTraceOverlay';
+import { Badge } from '@/components/ui/badge';
+import { ScaleCalibrationService } from '@/services/ScaleCalibrationService';
 
 export const BetaTestingDashboard: React.FC = () => {
   const [currentPrediction, setCurrentPrediction] = useState<RoofPrediction | null>(null);
@@ -26,6 +28,8 @@ export const BetaTestingDashboard: React.FC = () => {
   const [satelliteUrl, setSatelliteUrl] = useState<string | null>(null);
   const [isTracing, setIsTracing] = useState(false);
   const [usedZoom] = useState(20);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [calibration, setCalibration] = useState<null | { feetPerPixel: number; method: 'road' | 'car' | 'combined'; confidence: number }>(null);
   const { toast } = useToast();
 
   const handleAddressSubmit = async (address: string) => {
@@ -148,46 +152,76 @@ export const BetaTestingDashboard: React.FC = () => {
     run();
   }, [currentPrediction?.id]);
 
-  // Build facets for diagram (fallback to simple rectangle split if missing)
-  function buildFallbackFacets(totalArea: number, totalPerimeter?: number, predominantPitch?: string): RoofFacet[] {
-    const A = Math.max(totalArea, 1);
-    if (!totalPerimeter || totalPerimeter <= 0) {
-      const s = Math.sqrt(A);
-      const half = s / 2;
-      const left: RoofFacet = {
-        id: 'fallback-left',
-        polygon: [[0,0],[half,0],[half,s],[0,s]],
-        area: A / 2,
-        pitch: predominantPitch || '6/12',
-        type: 'main',
-        confidence: 0.2,
-      };
-      const right: RoofFacet = {
-        id: 'fallback-right',
-        polygon: [[half,0],[s,0],[s,s],[half,s]],
-        area: A / 2,
-        pitch: predominantPitch || '6/12',
-        type: 'main',
-        confidence: 0.2,
-      };
-      return [left, right];
-    }
-    const P = totalPerimeter;
-    const halfP = P / 2;
-    const disc = halfP * halfP - 4 * A;
-    let a: number, b: number;
-    if (disc > 0) {
-      const sqrtD = Math.sqrt(disc);
-      a = (halfP + sqrtD) / 2;
-      b = (halfP - sqrtD) / 2;
-    } else {
-      a = halfP / 2;
-      b = halfP / 2;
-    }
-    const halfA = a / 2;
-    const left: RoofFacet = { id: 'fallback-left', polygon: [[0,0],[halfA,0],[halfA,b],[0,b]], area: A / 2, pitch: predominantPitch || '6/12', type: 'main', confidence: 0.2 };
-    const right: RoofFacet = { id: 'fallback-right', polygon: [[halfA,0],[a,0],[a,b],[halfA,b]], area: A / 2, pitch: predominantPitch || '6/12', type: 'main', confidence: 0.2 };
-    return [left, right];
+  // Build facets for diagram (L-shaped, multi-facet with diagonal ridges)
+  function buildFallbackFacets(totalArea: number, _totalPerimeter?: number, predominantPitch?: string): RoofFacet[] {
+    const A = Math.max(totalArea, 900);
+    const s = Math.sqrt(A);
+
+    // Main house rectangle
+    const W = 0.70 * s;
+    const H = 0.50 * s;
+
+    // Attached garage offset to form an L
+    const Wg = 0.38 * s;
+    const Hg = 0.28 * s;
+    const xg = W - Wg * 0.6; // overlap a bit to read as attached
+    const yg = H - Hg * 0.2;
+
+    const pMain = predominantPitch || '6/12';
+
+    // Split main into two triangles along a diagonal (creates a diagonal ridge)
+    const mainA: RoofFacet = {
+      id: 'fallback-main-a',
+      polygon: [ [0,0], [W,0], [W,H] ],
+      area: (W * H) / 2,
+      pitch: pMain,
+      type: 'main',
+      confidence: 0.25,
+    };
+    const mainB: RoofFacet = {
+      id: 'fallback-main-b',
+      polygon: [ [0,0], [0,H], [W,H] ],
+      area: (W * H) / 2,
+      pitch: pMain,
+      type: 'main',
+      confidence: 0.25,
+    };
+
+    // Split garage into two triangles (another diagonal ridge)
+    const gX2 = xg + Wg;
+    const gY2 = yg + Hg;
+    const garageA: RoofFacet = {
+      id: 'fallback-garage-a',
+      polygon: [ [xg,yg], [gX2,yg], [gX2,gY2] ],
+      area: (Wg * Hg) / 2,
+      pitch: '7/12',
+      type: 'garage',
+      confidence: 0.25,
+    };
+    const garageB: RoofFacet = {
+      id: 'fallback-garage-b',
+      polygon: [ [xg,yg], [xg,gY2], [gX2,gY2] ],
+      area: (Wg * Hg) / 2,
+      pitch: '7/12',
+      type: 'garage',
+      confidence: 0.25,
+    };
+
+    // Small dormer to add complexity
+    const dW = 0.18 * s;
+    const dH = 0.12 * s;
+    const dx = W * 0.35;
+    const dy = H * 0.15;
+    const dormer: RoofFacet = {
+      id: 'fallback-dormer',
+      polygon: [ [dx,dy], [dx + dW, dy], [dx + dW, dy + dH] ],
+      area: (dW * dH) / 2,
+      pitch: '9/12',
+      type: 'dormer',
+      confidence: 0.2,
+    };
+
+    return [mainA, mainB, garageA, garageB, dormer];
   }
 
   const baseFacets = currentPrediction?.prediction.facets ?? [];
@@ -264,71 +298,6 @@ export const BetaTestingDashboard: React.FC = () => {
         {/* Professional Reports */}
         {currentPrediction && (
           <div className="space-y-8">
-            {/* Satellite Image & Manual Tracing */}
-            <Card className="roofiq-card">
-              <div className="p-6 space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground">Satellite Image</h3>
-                    <p className="text-sm text-muted-foreground">Captured for {currentPrediction.address}. Used for manual tracing.</p>
-                  </div>
-                  {!hasGeometry && (
-                    <div className="flex items-center gap-2 text-roofiq-amber">
-                      <TriangleAlert className="w-4 h-4" />
-                      <span className="text-xs font-medium">Illustrative only (not to scale) — trace to replace</span>
-                    </div>
-                  )}
-                </div>
-
-                {satelliteUrl ? (
-                  <div className="relative">
-                    <img src={satelliteUrl} alt={`Satellite of ${currentPrediction.address}`} className="w-full h-auto rounded-lg border border-border" />
-                    {!hasGeometry && (
-                      <div className="absolute bottom-3 left-3 px-2 py-1 rounded bg-background/80 text-xs border border-border">No verified geometry yet</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">Fetching satellite image…</div>
-                )}
-
-                <div className="flex items-center gap-3">
-                  {!hasGeometry && (
-                    <Button onClick={() => setIsTracing(true)}>Trace roof manually</Button>
-                  )}
-                </div>
-
-                {isTracing && satelliteUrl && (
-                  <RoofTraceOverlay
-                    imageUrl={satelliteUrl}
-                    address={currentPrediction.address}
-                    coordinates={currentPrediction.coordinates}
-                    zoom={usedZoom}
-                    retina={true}
-                    onCancel={() => setIsTracing(false)}
-                    onSave={({ facets, perimeterFeet, totalAreaFeet2 }) => {
-                      if (!currentPrediction) return;
-                      const updated = {
-                        ...currentPrediction,
-                        satelliteImage: satelliteUrl,
-                        prediction: {
-                          ...currentPrediction.prediction,
-                          facets: facets,
-                          totalArea: totalAreaFeet2,
-                          squares: Number((totalAreaFeet2 / 100).toFixed(1)),
-                          reportSummary: {
-                            ...currentPrediction.prediction.reportSummary,
-                            totalPerimeter: perimeterFeet,
-                          },
-                        },
-                      } as RoofPrediction;
-                      setCurrentPrediction(updated);
-                      setIsTracing(false);
-                      toast({ title: 'Geometry updated', description: 'Manual trace applied to the technical diagram.' });
-                    }}
-                  />
-                )}
-              </div>
-            </Card>
 
             {/* Dual Upload Section */}
             {!currentPrediction.validationData && (
@@ -381,7 +350,7 @@ export const BetaTestingDashboard: React.FC = () => {
                 />
               </div>
 
-              {/* Technical Roof Diagram */}
+              {/* Technical Roof Diagram + Source Imagery (right column) */}
               <div>
                 <Card className="sticky top-4">
                   <CardHeader>
@@ -404,6 +373,110 @@ export const BetaTestingDashboard: React.FC = () => {
                     />
                   </CardContent>
                 </Card>
+
+                {/* Source Aerial Imagery */}
+                <div className="mt-6">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="flex items-center gap-3">
+                        Source Aerial Imagery
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {calibration ? (
+                          <Badge variant="outline" className="text-xs">
+                            Calibrated • {calibration.method} • {(calibration.confidence * 100).toFixed(0)}%
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">Uncalibrated</Badge>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {satelliteUrl ? (
+                        <div className="relative">
+                          <img
+                            src={satelliteUrl}
+                            alt={`Satellite of ${currentPrediction.address}`}
+                            className="w-full h-auto rounded-lg border border-border"
+                            loading="lazy"
+                          />
+                          {!hasGeometry && (
+                            <div className="absolute bottom-3 left-3 px-2 py-1 rounded bg-background/80 text-xs border border-border">No verified geometry yet</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">Fetching satellite image…</div>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          variant="secondary"
+                          disabled={!satelliteUrl || isCalibrating}
+                          onClick={async () => {
+                            if (!satelliteUrl) return;
+                            try {
+                              setIsCalibrating(true);
+                              const res = await ScaleCalibrationService.calibrateFromImage(satelliteUrl);
+                              setCalibration(res);
+                              toast({
+                                title: 'Scale calibrated',
+                                description: `1 px ≈ ${res.feetPerPixel.toFixed(2)} ft (${(res.confidence * 100).toFixed(0)}% via ${res.method})`,
+                              });
+                            } catch (e) {
+                              console.error(e);
+                              toast({ title: 'Calibration failed', description: 'Try a different address or angle.', variant: 'destructive' });
+                            } finally {
+                              setIsCalibrating(false);
+                            }
+                          }}
+                        >
+                          {isCalibrating ? 'Calibrating…' : 'Calibrate scale'}
+                        </Button>
+
+                        {!hasGeometry && (
+                          <Button onClick={() => setIsTracing(true)}>Trace roof manually</Button>
+                        )}
+
+                        {calibration && (
+                          <div className="text-xs text-muted-foreground">
+                            Estimated: 1 px ≈ {calibration.feetPerPixel.toFixed(2)} ft
+                          </div>
+                        )}
+                      </div>
+
+                      {isTracing && satelliteUrl && (
+                        <RoofTraceOverlay
+                          imageUrl={satelliteUrl}
+                          address={currentPrediction.address}
+                          coordinates={currentPrediction.coordinates}
+                          zoom={usedZoom}
+                          retina={true}
+                          onCancel={() => setIsTracing(false)}
+                          onSave={({ facets, perimeterFeet, totalAreaFeet2 }) => {
+                            if (!currentPrediction) return;
+                            const updated = {
+                              ...currentPrediction,
+                              satelliteImage: satelliteUrl,
+                              prediction: {
+                                ...currentPrediction.prediction,
+                                facets: facets,
+                                totalArea: totalAreaFeet2,
+                                squares: Number((totalAreaFeet2 / 100).toFixed(1)),
+                                reportSummary: {
+                                  ...currentPrediction.prediction.reportSummary,
+                                  totalPerimeter: perimeterFeet,
+                                },
+                              },
+                            } as RoofPrediction;
+                            setCurrentPrediction(updated);
+                            setIsTracing(false);
+                            toast({ title: 'Geometry updated', description: 'Manual trace applied to the technical diagram.' });
+                          }}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </div>
           </div>
