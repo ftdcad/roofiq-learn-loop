@@ -9,7 +9,7 @@ import { InstantFeedback } from './InstantFeedback';
 import { NeighborhoodContext } from './NeighborhoodContext';
 import { ShowYourWork } from './ShowYourWork';
 import { NeighborhoodService, NeighborhoodData } from '@/services/neighborhoodService';
-import { EagleViewUploader } from './EagleViewUploader';
+import { ValidationReportUploader } from './ValidationReportUploader';
 
 interface RoofVisualizationProps {
   prediction: RoofPrediction;
@@ -172,11 +172,11 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
         />
       )}
 
-      {/* EagleView Upload for Learning */}
-      <EagleViewUploader 
+      {/* Validation Report Upload for Learning */}
+      <ValidationReportUploader 
         predictionId={prediction.id}
         onUploadComplete={(data) => {
-          console.log('EagleView data received:', data);
+          console.log('Validation data received:', data);
           // Could trigger a re-fetch or update UI
         }}
       />

@@ -81,7 +81,7 @@ export interface RoofPrediction {
     };
   };
   
-  eagleViewData?: {
+  validationData?: {
     reportId: string;
     uploadDate: Date;
     facets: RoofFacet[];
@@ -119,7 +119,7 @@ export interface TrainingProgress {
   modelVersion: string;
 }
 
-export interface EagleViewReport {
+export interface ValidationReport {
   reportId: string;
   address: string;
   uploadDate: Date;

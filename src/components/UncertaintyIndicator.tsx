@@ -29,7 +29,7 @@ export const UncertaintyIndicator: React.FC<UncertaintyIndicatorProps> = ({ pred
       <Alert className="border-roofiq-amber/20 bg-roofiq-amber/10">
         <AlertCircle className="h-4 w-4 text-roofiq-amber" />
         <AlertDescription className="text-roofiq-amber">
-          Moderate confidence - consider EagleView verification
+          Moderate confidence - consider professional verification
         </AlertDescription>
       </Alert>
     );
@@ -40,12 +40,12 @@ export const UncertaintyIndicator: React.FC<UncertaintyIndicatorProps> = ({ pred
       <AlertTriangle className="h-4 w-4 text-roofiq-red" />
       <AlertDescription className="text-roofiq-red">
         <div className="space-y-2">
-          <div className="font-medium">Low confidence - EagleView required</div>
+          <div className="font-medium">Low confidence - professional validation required</div>
           <div className="text-sm">
             {dualModelData?.reasoning || 'Image quality or complexity requires verification'}
           </div>
           <Badge variant="outline" className="bg-roofiq-red/5 text-roofiq-red border-roofiq-red/20">
-            REQUIRE_EAGLEVIEW
+            REQUIRE_VALIDATION
           </Badge>
         </div>
       </AlertDescription>

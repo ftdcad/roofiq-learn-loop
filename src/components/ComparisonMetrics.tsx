@@ -6,7 +6,7 @@ import { RoofPrediction } from '@/types/roof-analysis';
 
 interface ComparisonMetricsProps {
   prediction: RoofPrediction['prediction'];
-  actual: RoofPrediction['eagleViewData'];
+  actual: RoofPrediction['validationData'];
   comparison: RoofPrediction['comparison'];
 }
 
@@ -71,7 +71,7 @@ export const ComparisonMetrics: React.FC<ComparisonMetricsProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-muted-foreground">Actual (EagleView)</div>
+              <div className="text-muted-foreground">Actual (Professional)</div>
               <div className="font-mono font-semibold text-foreground">
                 {actual.totalArea.toLocaleString()} sq ft
               </div>
@@ -95,7 +95,7 @@ export const ComparisonMetrics: React.FC<ComparisonMetricsProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-muted-foreground">Actual (EagleView)</div>
+              <div className="text-muted-foreground">Actual (Professional)</div>
               <div className="font-mono font-semibold text-foreground">
                 {actual.facets.length} facets
               </div>

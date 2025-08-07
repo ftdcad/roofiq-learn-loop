@@ -30,7 +30,7 @@ export const BetaTestingDashboard: React.FC = () => {
       
       toast({
         title: "AI Analysis Complete!",
-        description: `Roof analysis finished with ${prediction.prediction.confidence.toFixed(1)}% confidence. Upload EagleView report to help train our AI!`,
+        description: `Roof analysis finished with ${prediction.prediction.confidence.toFixed(1)}% confidence. Upload professional report to help train our AI!`,
       });
       
     } catch (error) {
@@ -45,13 +45,13 @@ export const BetaTestingDashboard: React.FC = () => {
     }
   };
 
-  const handleEagleViewUpload = async (file: File) => {
+  const handleValidationReportUpload = async (file: File) => {
     if (!currentPrediction) return;
     
     setIsProcessingUpload(true);
     
     try {
-      const { eagleViewData, comparison } = await RoofAnalysisService.processEagleViewUpload(
+      const { validationData, comparison } = await RoofAnalysisService.processValidationReportUpload(
         currentPrediction.id, 
         file
       );
@@ -59,7 +59,7 @@ export const BetaTestingDashboard: React.FC = () => {
       // Update prediction with comparison data
       const updatedPrediction = {
         ...currentPrediction,
-        eagleViewData,
+        validationData,
         comparison
       };
       
@@ -85,7 +85,7 @@ export const BetaTestingDashboard: React.FC = () => {
       console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to parse EagleView report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to parse validation report. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -138,7 +138,7 @@ export const BetaTestingDashboard: React.FC = () => {
               
               {/* Value Proposition */}
               <p className="text-lg text-white/80 max-w-3xl mx-auto leading-relaxed">
-                Advanced AI-powered roof measurement system that learns from professional EagleView reports. 
+                Advanced AI-powered roof measurement system that learns from professional roof reports. 
                 Target: <span className="text-roofiq-green-light font-semibold">95% accuracy</span> with 3,000+ comparisons.
               </p>
               
@@ -170,7 +170,7 @@ export const BetaTestingDashboard: React.FC = () => {
         {currentPrediction && (
           <div className="space-y-8">
             {/* Upload Section */}
-            {!currentPrediction.eagleViewData && (
+            {!currentPrediction.validationData && (
               <Card className="roofiq-card">
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-6">
@@ -182,21 +182,21 @@ export const BetaTestingDashboard: React.FC = () => {
                         Help Us Learn
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Upload EagleView report to improve accuracy
+                        Upload professional report to improve accuracy
                       </p>
                     </div>
                   </div>
                   
                   <Upload
                     accept=".pdf"
-                    onUpload={handleEagleViewUpload}
+                    onUpload={handleValidationReportUpload}
                     className="border-2 border-dashed border-roofiq-blue/30 hover:border-roofiq-blue/50 transition-colors"
                     disabled={isProcessingUpload}
                   >
                     <div className="text-center py-12">
                       <UploadIcon className={`w-12 h-12 text-muted-foreground mx-auto mb-4 ${isProcessingUpload ? 'animate-bounce' : ''}`} />
                       <p className="text-foreground font-medium mb-2">
-                        {isProcessingUpload ? 'Processing EagleView Report...' : 'Upload EagleView Report'}
+                        {isProcessingUpload ? 'Processing Validation Report...' : 'Upload Existing Roof Report'}
                       </p>
                       <p className="text-sm text-muted-foreground mb-4">
                         Drag and drop your PDF or click to browse
@@ -212,7 +212,7 @@ export const BetaTestingDashboard: React.FC = () => {
             )}
 
             {/* Comparison Results */}
-            {currentPrediction.eagleViewData && currentPrediction.comparison && (
+            {currentPrediction.validationData && currentPrediction.comparison && (
               <Card className="roofiq-card">
                 <div className="p-6">
                   <div className="flex items-center gap-3 mb-6">
@@ -224,14 +224,14 @@ export const BetaTestingDashboard: React.FC = () => {
                         Comparison Results
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Analysis vs EagleView Report #{currentPrediction.eagleViewData.reportId}
+                        Analysis vs Validation Report #{currentPrediction.validationData.reportId}
                       </p>
                     </div>
                   </div>
                   
                   <ComparisonMetrics 
                     prediction={currentPrediction.prediction}
-                    actual={currentPrediction.eagleViewData}
+                    actual={currentPrediction.validationData}
                     comparison={currentPrediction.comparison}
                   />
                 </div>
@@ -244,18 +244,18 @@ export const BetaTestingDashboard: React.FC = () => {
               <div>
                 <ProfessionalReportView 
                   prediction={currentPrediction}
-                  isEagleView={false}
+                  isProfessionalReport={false}
                   title="RoofIQ AI Analysis Report"
                 />
               </div>
 
-              {/* EagleView Report */}
-              {currentPrediction.eagleViewData && (
+              {/* Professional Report */}
+              {currentPrediction.validationData && (
                 <div>
                   <ProfessionalReportView 
                     prediction={currentPrediction}
-                    isEagleView={true}
-                    title="EagleView Professional Report"
+                    isProfessionalReport={true}
+                    title="Professional Validation Report"
                   />
                 </div>
               )}

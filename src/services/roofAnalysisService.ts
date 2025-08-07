@@ -98,30 +98,30 @@ export class RoofAnalysisService {
     }
   }
 
-  static async processEagleViewUpload(
+  static async processValidationReportUpload(
     analysisId: string, 
     file: File
-  ): Promise<{ eagleViewData: any; comparison: any }> {
+  ): Promise<{ validationData: any; comparison: any }> {
     try {
-      console.log('Processing EagleView upload for analysis:', analysisId);
+      console.log('Processing validation report upload for analysis:', analysisId);
 
       // For now, we'll just pass the file info. 
       // In a production system, you'd upload the file to Supabase Storage first
-      const { data, error } = await supabase.functions.invoke('process-eagleview', {
+      const { data, error } = await supabase.functions.invoke('process-validation-report', {
         body: { 
           analysisId,
-          eagleviewFile: {
+          validationFile: {
             name: file.name,
             size: file.size,
             type: file.type
           },
           // In production, you'd extract text from PDF here or upload to storage
-          fileContent: `Mock EagleView Report for ${file.name}` 
+          fileContent: `Mock Validation Report for ${file.name}`
         }
       });
 
       if (error) {
-        console.error('EagleView processing error:', error);
+        console.error('Validation report processing error:', error);
         throw new Error(`Processing failed: ${error.message}`);
       }
 
@@ -129,14 +129,14 @@ export class RoofAnalysisService {
         throw new Error(data.error || 'Processing failed');
       }
 
-      console.log('EagleView processing completed successfully');
+      console.log('Validation report processing completed successfully');
       return {
-        eagleViewData: data.eagleviewData,
+        validationData: data.validationData,
         comparison: data.comparison
       };
 
     } catch (error) {
-      console.error('Error processing EagleView upload:', error);
+      console.error('Error processing validation report upload:', error);
       throw error;
     }
   }
@@ -196,18 +196,18 @@ export class RoofAnalysisService {
     }
   }
 
-  static async updateAnalysisWithEagleView(
-    predictionId: string,
-    eagleViewData: any,
+  static async updateAnalysisWithValidation(
+    predictionId: string, 
+    validationData: any, 
     comparison: any
   ): Promise<void> {
     try {
       const { error } = await supabase
         .from('roof_analyses')
         .update({
-          eagleview_data: eagleViewData,
-          eagleview_upload_date: new Date().toISOString(),
-          eagleview_report_id: eagleViewData.reportId,
+          validation_data: validationData,
+          validation_upload_date: new Date().toISOString(),
+          validation_report_id: validationData.reportId,
           comparison_results: comparison,
           area_error_percent: Math.abs(comparison.areaErrorPercent),
           overall_accuracy_score: comparison.overallScore
@@ -219,9 +219,9 @@ export class RoofAnalysisService {
         throw error;
       }
 
-      console.log('Analysis updated with EagleView data');
+      console.log('Analysis updated with validation data');
     } catch (error) {
-      console.error('Error updating analysis with EagleView data:', error);
+      console.error('Error updating analysis with validation data:', error);
       throw error;
     }
   }

@@ -7,12 +7,12 @@ import { Upload, FileText, AlertTriangle, CheckCircle, Loader2 } from 'lucide-re
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
-interface EagleViewUploaderProps {
+interface ValidationReportUploaderProps {
   predictionId: string;
-  onUploadComplete: (eagleViewData: any) => void;
+  onUploadComplete: (validationData: any) => void;
 }
 
-export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
+export const ValidationReportUploader: React.FC<ValidationReportUploaderProps> = ({
   predictionId,
   onUploadComplete
 }) => {
@@ -74,8 +74,8 @@ export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
         });
       }, 200);
 
-      // Process the EagleView PDF
-      const { data, error } = await supabase.functions.invoke('process-eagleview', {
+      // Process the validation report
+      const { data, error } = await supabase.functions.invoke('process-validation-report', {
         body: {
           predictionId,
           fileName: file.name,
@@ -93,17 +93,17 @@ export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
       }
 
       toast({
-        title: "EagleView report processed",
+        title: "Validation report processed",
         description: "Successfully extracted roof measurements",
       });
 
       onUploadComplete(data);
 
     } catch (error) {
-      console.error('Error uploading EagleView file:', error);
+      console.error('Error uploading validation report:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to process EagleView report",
+        description: "Failed to process validation report",
         variant: "destructive",
       });
     } finally {
@@ -130,7 +130,7 @@ export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
             <Loader2 className="w-5 h-5 text-roofiq-blue animate-spin" />
-            <span className="font-medium text-roofiq-blue">Processing EagleView Report</span>
+            <span className="font-medium text-roofiq-blue">Processing Validation Report</span>
           </div>
           
           {uploadedFile && (
@@ -161,10 +161,10 @@ export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
       <div className="space-y-4">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            Upload EagleView Report
+            Upload Existing Roof Report
           </h3>
           <p className="text-sm text-muted-foreground">
-            Upload your EagleView PDF to compare AI predictions with professional measurements
+            Upload your professional roof report PDF to compare AI predictions with expert measurements
           </p>
         </div>
 
@@ -182,7 +182,7 @@ export const EagleViewUploader: React.FC<EagleViewUploaderProps> = ({
           <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">
-              Drop your EagleView PDF here or click to browse
+              Drop your professional roof report PDF here or click to browse
             </div>
             <div className="text-xs text-muted-foreground">
               Supports PDF files up to 10MB

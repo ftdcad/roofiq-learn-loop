@@ -8,20 +8,20 @@ import { RoofPrediction } from '@/types/roof-analysis';
 
 interface ProfessionalReportViewProps {
   prediction: RoofPrediction;
-  isEagleView?: boolean;
+  isProfessionalReport?: boolean;
   title?: string;
 }
 
 export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({ 
   prediction, 
-  isEagleView = false,
+  isProfessionalReport = false,
   title 
 }) => {
-  const data = isEagleView ? prediction.eagleViewData : prediction.prediction;
+  const data = isProfessionalReport ? prediction.validationData : prediction.prediction;
   if (!data) return null;
 
-  const reportTitle = title || (isEagleView ? 'EagleView Professional Report' : 'RoofIQ AI Analysis Report');
-  const reportId = isEagleView && 'reportId' in data ? data.reportId : `RIQ-${prediction.id.slice(0, 8)}`;
+  const reportTitle = title || (isProfessionalReport ? 'Professional Validation Report' : 'RoofIQ AI Analysis Report');
+  const reportId = isProfessionalReport && 'reportId' in data ? data.reportId : `RIQ-${prediction.id.slice(0, 8)}`;
 
   return (
     <div className="space-y-6">
@@ -256,7 +256,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
                 <TableHead>Type</TableHead>
                 <TableHead>Pitch</TableHead>
                 <TableHead className="text-right">Area (sq ft)</TableHead>
-                {!isEagleView && <TableHead className="text-right">Confidence</TableHead>}
+                {!isProfessionalReport && <TableHead className="text-right">Confidence</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -272,7 +272,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
                   <TableCell className="text-right font-mono">
                     {(facet.area || 0).toLocaleString()}
                   </TableCell>
-                  {!isEagleView && (
+                  {!isProfessionalReport && (
                     <TableCell className="text-right">
                       <Badge variant="outline" className={`${
                         (facet.confidence || 0) >= 85 ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
@@ -287,7 +287,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               ))}
               {(!data.facets || !Array.isArray(data.facets) || data.facets.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={isEagleView ? 4 : 5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={isProfessionalReport ? 4 : 5} className="text-center text-muted-foreground py-8">
                     No roof facets data available
                   </TableCell>
                 </TableRow>

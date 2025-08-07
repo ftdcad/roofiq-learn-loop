@@ -143,15 +143,15 @@ export type Database = {
           comparison_results: Json | null
           coordinates: Json
           created_at: string
-          eagleview_data: Json | null
-          eagleview_report_id: string | null
-          eagleview_upload_date: string | null
           id: string
           overall_accuracy_score: number | null
           prediction_date: string
           satellite_image_url: string | null
           updated_at: string
           user_id: string | null
+          validation_data: Json | null
+          validation_report_id: string | null
+          validation_upload_date: string | null
         }
         Insert: {
           address: string
@@ -161,15 +161,15 @@ export type Database = {
           comparison_results?: Json | null
           coordinates: Json
           created_at?: string
-          eagleview_data?: Json | null
-          eagleview_report_id?: string | null
-          eagleview_upload_date?: string | null
           id?: string
           overall_accuracy_score?: number | null
           prediction_date?: string
           satellite_image_url?: string | null
           updated_at?: string
           user_id?: string | null
+          validation_data?: Json | null
+          validation_report_id?: string | null
+          validation_upload_date?: string | null
         }
         Update: {
           address?: string
@@ -179,15 +179,15 @@ export type Database = {
           comparison_results?: Json | null
           coordinates?: Json
           created_at?: string
-          eagleview_data?: Json | null
-          eagleview_report_id?: string | null
-          eagleview_upload_date?: string | null
           id?: string
           overall_accuracy_score?: number | null
           prediction_date?: string
           satellite_image_url?: string | null
           updated_at?: string
           user_id?: string | null
+          validation_data?: Json | null
+          validation_report_id?: string | null
+          validation_upload_date?: string | null
         }
         Relationships: []
       }
