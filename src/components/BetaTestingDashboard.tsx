@@ -469,8 +469,8 @@ export const BetaTestingDashboard: React.FC = () => {
                               prediction: {
                                 ...currentPrediction.prediction,
                                 facets: facets,
-                                totalArea: totalAreaFeet2,
-                                squares: Number((totalAreaFeet2 / 100).toFixed(1)),
+                                totalArea: Math.round(totalAreaFeet2),
+                                squares: Number(((Math.round(totalAreaFeet2)) / 100).toFixed(1)),
                                 reportSummary: {
                                   ...currentPrediction.prediction.reportSummary,
                                   totalPerimeter: perimeterFeet,

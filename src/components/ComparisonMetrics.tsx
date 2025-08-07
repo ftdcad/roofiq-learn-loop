@@ -67,13 +67,13 @@ export const ComparisonMetrics: React.FC<ComparisonMetricsProps> = ({
             <div>
               <div className="text-muted-foreground">Predicted</div>
               <div className="font-mono font-semibold text-foreground">
-                {Number(prediction.totalArea ?? 0).toLocaleString()} sq ft
+                {Math.round(Number(prediction.totalArea ?? 0)).toLocaleString()} sq ft
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">Actual (Professional)</div>
               <div className="font-mono font-semibold text-foreground">
-                {Number(actual?.totalArea ?? 0).toLocaleString()} sq ft
+                {Math.round(Number(actual?.totalArea ?? 0)).toLocaleString()} sq ft
               </div>
             </div>
           </div>

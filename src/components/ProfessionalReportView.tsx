@@ -76,7 +76,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               <span className="text-sm font-medium text-muted-foreground">Total Roof Area</span>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              {Number((data.totalArea ?? 0)).toLocaleString()}
+              {Math.round(Number(data.totalArea ?? 0)).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">square feet</div>
           </div>
@@ -150,7 +150,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
                 <TableRow key={index}>
                   <TableCell className="font-medium">{pitchArea?.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {Number(pitchArea?.area ?? 0).toLocaleString()}
+                    {Math.round(Number(pitchArea?.area ?? 0)).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     {Number(pitchArea?.squares ?? 0).toFixed(2)}
@@ -294,7 +294,7 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
                   </TableCell>
                   <TableCell className="font-mono">{facet?.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {Number(facet?.area ?? 0).toLocaleString()}
+                    {Math.round(Number(facet?.area ?? 0)).toLocaleString()}
                   </TableCell>
                   {!isProfessionalReport && (
                     <TableCell className="text-right">

@@ -99,7 +99,7 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
             <span className="text-xs font-medium text-muted-foreground">Total Area</span>
           </div>
           <div className="text-lg font-bold text-foreground font-mono">
-            {Number(pred.totalArea ?? 0).toLocaleString()} sq ft
+            {Math.round(Number(pred.totalArea ?? 0)).toLocaleString()} sq ft
           </div>
         </div>
         

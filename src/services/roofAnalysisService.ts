@@ -45,6 +45,16 @@ export class RoofAnalysisService {
       });
       
       // Convert consensus result to RoofPrediction format
+      // Sanitize/round values for professional display and safety
+      const rawTotalArea = Number(consensus.finalPrediction.totalArea || 0);
+      const roundedTotalArea = Math.round(rawTotalArea);
+      const computedSquares = Number(((roundedTotalArea / 100) || 0).toFixed(1));
+      const wfRaw = Number(consensus.finalPrediction.wasteFactor ?? 15);
+      const wfClamped = Math.min(25, Math.max(10, Math.round(wfRaw)));
+      if (wfRaw > 30) {
+        console.error('IMPOSSIBLE WASTE FACTOR:', wfRaw);
+      }
+
       let prediction: RoofPrediction = {
         id: '',
         address: resolvedAddress,
@@ -53,8 +63,8 @@ export class RoofAnalysisService {
         predictionDate: new Date(),
         prediction: {
           facets: consensus.finalPrediction.facets || [],
-          totalArea: consensus.finalPrediction.totalArea || 0,
-          squares: Number(((consensus.finalPrediction.squares || 0)).toFixed(1)),
+          totalArea: roundedTotalArea,
+          squares: computedSquares,
           measurements: consensus.finalPrediction.measurements || {
             ridges: 0,
             valleys: 0,
@@ -66,7 +76,7 @@ export class RoofAnalysisService {
             drip: 0
           },
           predominantPitch: consensus.finalPrediction.predominantPitch || '4/12',
-          wasteFactor: consensus.finalPrediction.wasteFactor || 15,
+          wasteFactor: wfClamped,
           confidence: consensus.finalPrediction.confidence || 0,
           areasByPitch: consensus.finalPrediction.areasByPitch || [],
           propertyDetails: consensus.finalPrediction.propertyDetails || {
