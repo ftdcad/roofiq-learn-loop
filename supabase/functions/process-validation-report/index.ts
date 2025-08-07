@@ -12,6 +12,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let correlationId = `${Date.now()}`;
   try {
     console.log('🔍 DETAILED DEBUG: Starting process-validation-report');
     console.log('🔍 Environment check:', {
@@ -45,7 +46,7 @@ serve(async (req) => {
       correlationId: incomingCorrelationId
     } = requestBody;
 
-    const correlationId = incomingCorrelationId || (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
+    correlationId = incomingCorrelationId || (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
 
     // Use predictionId as the primary key (that's what we're actually sending)
     const actualId = predictionId || analysisId;
