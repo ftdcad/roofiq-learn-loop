@@ -47,11 +47,15 @@ Based on this specific address:
 - Factor in lot size and neighborhood density
 - Analyze roof complexity from address characteristics
 
-MEASUREMENT GUIDELINES:
-- Small homes (1000-1800 sq ft): 2-4 facets
-- Medium homes (1800-3000 sq ft): 4-8 facets  
-- Large homes (3000+ sq ft): 6-15+ facets
-- Complex roofs: Multiple dormers, additions, multi-level
+REALISTIC MEASUREMENT GUIDELINES:
+- Typical suburban homes: 1,800-2,800 sq ft roof area (15-28 squares)
+- Ranch homes: Usually 2,000-3,500 sq ft (20-35 squares)  
+- Two-story homes: 1,500-2,500 sq ft roof (15-25 squares)
+- Large homes: 3,000-4,500 sq ft roof (30-45 squares)
+- Small facets: 150-800 sq ft each
+- Large facets: 800-2,000 sq ft each
+- Dormers: 50-300 sq ft typically
+- Garages: 400-800 sq ft for 2-car
 
 PITCH VARIATION BY REGION:
 - Northern states: 8/12 to 12/12 (steep for snow)
@@ -62,7 +66,7 @@ RETURN ONLY VALID JSON IN THIS EXACT STRUCTURE:
 {
   "address": "${address}",
   "analysis_timestamp": "${new Date().toISOString()}",
-  "totalArea": [UNIQUE NUMBER - realistic for this property type],
+  "totalArea": [REALISTIC ROOF AREA 1500-4500 sq ft - NOT BUILDING FOOTPRINT],
   "squares": [totalArea / 100],
   "confidence": [VARY 75-95 based on analysis clarity],
   "facets": [

@@ -20,13 +20,15 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { analysisId, predictionId, fileName, fileSize, fileType = 'roof', fileContent, fileData } = await req.json();
 
-    console.log(`Processing ${fileType} file upload for analysis ID: ${analysisId || predictionId}`);
+    // Use predictionId as the primary key (that's what we're actually sending)
+    const actualId = predictionId || analysisId;
+    console.log(`Processing ${fileType} file upload for analysis ID: ${actualId}`);
 
     // Get the original analysis
     const { data: originalAnalysis, error: fetchError } = await supabase
       .from('roof_analyses')
       .select('*')
-      .eq('id', analysisId || predictionId)
+      .eq('id', actualId)
       .single();
 
     if (fetchError || !originalAnalysis) {
@@ -215,7 +217,7 @@ Extract all numerical measurements precisely from the document.
     const { data: updatedAnalysis, error: updateError } = await supabase
       .from('roof_analyses')
       .update(updateData)
-      .eq('id', analysisId || predictionId)
+      .eq('id', actualId)
       .select()
       .single();
 
@@ -249,7 +251,7 @@ Extract all numerical measurements precisely from the document.
         .eq('id', progressData.id);
     }
 
-    console.log(`${fileType} processing completed for analysis ${analysisId || predictionId}`);
+    console.log(`${fileType} processing completed for analysis ${actualId}`);
 
     return new Response(
       JSON.stringify({
