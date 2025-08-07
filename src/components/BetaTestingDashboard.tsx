@@ -122,9 +122,12 @@ export const BetaTestingDashboard: React.FC = () => {
   };
 
   const loadTestReport = async () => {
+    // If no current prediction, run one first
     if (!currentPrediction) {
-      toast({ title: 'No analysis yet', description: 'Run an address analysis first.', variant: 'destructive' });
-      return;
+      toast({ title: 'Auto-running analysis...', description: 'Loading test address first', });
+      await handleAddressSubmit("18004 Avalon Lane, Tampa, FL 33647");
+      // Wait a moment for state to update
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     try {
@@ -361,6 +364,67 @@ export const BetaTestingDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Test Mode - Always Visible */}
+        <Card className="border-2 border-amber-500 mb-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-600">
+              <TriangleAlert className="h-5 w-5" />
+              ⚠️ Test Mode (Upload Broken)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              size="lg" 
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold" 
+              onClick={loadTestReport}
+              disabled={isAnalyzing}
+            >
+              🔧 LOAD TEST EAGLEVIEW REPORT
+            </Button>
+            {testReportLoaded && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-sm text-amber-800 font-medium">
+                  ✅ Test report loaded: {TEST_EAGLEVIEW_REPORT.address}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Big Comparison Display */}
+        {currentPrediction && testReportLoaded && (
+          <Card className="border-2 border-blue-500 mb-4">
+            <CardHeader>
+              <CardTitle className="text-xl text-blue-600">📊 AI vs EagleView Comparison</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-800">AI Prediction</h3>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {Math.round(currentPrediction.prediction.totalArea)} sq ft
+                  </p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h3 className="font-semibold text-green-800">EagleView Actual</h3>
+                  <p className="text-2xl font-bold text-green-600">
+                    {TEST_EAGLEVIEW_REPORT.measurements.totalArea} sq ft
+                  </p>
+                </div>
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <h3 className="font-semibold text-red-800">Error</h3>
+                  <p className={`text-2xl font-bold ${
+                    currentPrediction.comparison?.areaErrorPercent > 10 ? 'text-red-600' : 'text-green-600'
+                  }`}>
+                    {currentPrediction.comparison?.areaErrorPercent || 0}%
+                    {(currentPrediction.comparison?.areaErrorPercent || 0) > 10 && ' ❌'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Training Progress */}
         {trainingProgress && <TrainingProgress progress={trainingProgress} />}
