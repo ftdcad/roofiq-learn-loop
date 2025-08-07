@@ -12,6 +12,15 @@ export class RoofAnalysisService {
       // Use the new dual-model architecture
       const consensus = await this.dualEngine.predict(address, satelliteImage);
       
+      console.log('RoofAnalysisService: Consensus received:', {
+        hasFinalPrediction: !!consensus.finalPrediction,
+        facetsType: typeof consensus.finalPrediction?.facets,
+        facetsIsArray: Array.isArray(consensus.finalPrediction?.facets),
+        facetsLength: consensus.finalPrediction?.facets?.length,
+        totalArea: consensus.finalPrediction?.totalArea,
+        confidence: consensus.confidence
+      });
+      
       // Convert consensus result to RoofPrediction format
       const prediction: RoofPrediction = {
         id: crypto.randomUUID(),
@@ -20,16 +29,37 @@ export class RoofAnalysisService {
         satelliteImage,
         predictionDate: new Date(),
         prediction: {
-          facets: consensus.finalPrediction.facets,
-          totalArea: consensus.finalPrediction.totalArea,
-          squares: consensus.finalPrediction.squares,
-          measurements: consensus.finalPrediction.measurements,
-          predominantPitch: consensus.finalPrediction.predominantPitch,
-          wasteFactor: consensus.finalPrediction.wasteFactor,
-          confidence: consensus.finalPrediction.confidence,
-          areasByPitch: consensus.finalPrediction.areasByPitch,
-          propertyDetails: consensus.finalPrediction.propertyDetails,
-          reportSummary: consensus.finalPrediction.reportSummary,
+          facets: consensus.finalPrediction.facets || [],
+          totalArea: consensus.finalPrediction.totalArea || 0,
+          squares: consensus.finalPrediction.squares || 0,
+          measurements: consensus.finalPrediction.measurements || {
+            ridges: 0,
+            valleys: 0,
+            hips: 0,
+            rakes: 0,
+            eaves: 0,
+            gutters: 0,
+            stepFlashing: 0,
+            drip: 0
+          },
+          predominantPitch: consensus.finalPrediction.predominantPitch || '4/12',
+          wasteFactor: consensus.finalPrediction.wasteFactor || 15,
+          confidence: consensus.finalPrediction.confidence || 0,
+          areasByPitch: consensus.finalPrediction.areasByPitch || [],
+          propertyDetails: consensus.finalPrediction.propertyDetails || {
+            stories: 1,
+            estimatedAtticArea: 0,
+            structureComplexity: 'Moderate' as const,
+            roofAccessibility: 'Moderate',
+            chimneys: 0,
+            skylights: 0,
+            vents: 0
+          },
+          reportSummary: consensus.finalPrediction.reportSummary || {
+            totalPerimeter: 0,
+            averagePitch: '4/12',
+            roofComplexityScore: 0
+          },
           // Add dual-model specific metadata
           dualModelMetadata: {
             modelAgreement: consensus.modelAgreement,
@@ -42,6 +72,15 @@ export class RoofAnalysisService {
           }
         }
       };
+
+      console.log('RoofAnalysisService: Final prediction created:', {
+        id: prediction.id,
+        hasPrediction: !!prediction.prediction,
+        facetsCount: prediction.prediction?.facets?.length || 0,
+        totalArea: prediction.prediction?.totalArea,
+        hasPropertyDetails: !!prediction.prediction?.propertyDetails,
+        hasReportSummary: !!prediction.prediction?.reportSummary
+      });
 
       console.log('Enhanced dual-model analysis completed with confidence:', consensus.confidence);
       console.log('Model agreement level:', Math.round(consensus.modelAgreement * 100) + '%');

@@ -122,22 +122,29 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.areasByPitch.map((pitchArea, index) => (
+              {(data.areasByPitch && Array.isArray(data.areasByPitch) ? data.areasByPitch : []).map((pitchArea, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">{pitchArea.pitch}</TableCell>
+                  <TableCell className="font-medium">{pitchArea.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {pitchArea.area.toLocaleString()}
+                    {(pitchArea.area || 0).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {pitchArea.squares.toFixed(2)}
+                    {(pitchArea.squares || 0).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className="font-mono">
-                      {pitchArea.percentage}%
+                      {pitchArea.percentage || 0}%
                     </Badge>
                   </TableCell>
                 </TableRow>
               ))}
+              {(!data.areasByPitch || !Array.isArray(data.areasByPitch) || data.areasByPitch.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    No areas by pitch data available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -148,16 +155,22 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
         <div className="p-6">
           <h3 className="text-lg font-semibold text-foreground mb-4">Linear Measurements</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(data.measurements).map(([key, value]) => (
-              <div key={key} className="p-3 rounded-lg bg-secondary border border-border">
-                <div className="text-sm text-muted-foreground capitalize">
-                  {key.replace(/([A-Z])/g, ' $1').trim()}
+            {data.measurements && typeof data.measurements === 'object' ? 
+              Object.entries(data.measurements).map(([key, value]) => (
+                <div key={key} className="p-3 rounded-lg bg-secondary border border-border">
+                  <div className="text-sm text-muted-foreground capitalize">
+                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                  </div>
+                  <div className="text-lg font-bold text-foreground font-mono">
+                    {value || 0} ft
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-foreground font-mono">
-                  {value} ft
+              )) : (
+                <div className="col-span-full text-center text-muted-foreground py-8">
+                  No measurements data available
                 </div>
-              </div>
-            ))}
+              )
+            }
           </div>
         </div>
       </Card>
@@ -247,31 +260,38 @@ export const ProfessionalReportView: React.FC<ProfessionalReportViewProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.facets.map((facet, index) => (
-                <TableRow key={facet.id}>
+              {(data.facets && Array.isArray(data.facets) ? data.facets : []).map((facet, index) => (
+                <TableRow key={facet.id || `facet-${index}`}>
                   <TableCell className="font-medium">#{index + 1}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
-                      {facet.type}
+                      {facet.type || 'Unknown'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono">{facet.pitch}</TableCell>
+                  <TableCell className="font-mono">{facet.pitch || 'N/A'}</TableCell>
                   <TableCell className="text-right font-mono">
-                    {facet.area.toLocaleString()}
+                    {(facet.area || 0).toLocaleString()}
                   </TableCell>
                   {!isEagleView && (
                     <TableCell className="text-right">
                       <Badge variant="outline" className={`${
-                        facet.confidence >= 85 ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
-                        facet.confidence >= 70 ? 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20' :
+                        (facet.confidence || 0) >= 85 ? 'bg-roofiq-green/10 text-roofiq-green border-roofiq-green/20' :
+                        (facet.confidence || 0) >= 70 ? 'bg-roofiq-amber/10 text-roofiq-amber border-roofiq-amber/20' :
                         'bg-roofiq-red/10 text-roofiq-red border-roofiq-red/20'
                       }`}>
-                        {facet.confidence.toFixed(1)}%
+                        {(facet.confidence || 0).toFixed(1)}%
                       </Badge>
                     </TableCell>
                   )}
                 </TableRow>
               ))}
+              {(!data.facets || !Array.isArray(data.facets) || data.facets.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={isEagleView ? 4 : 5} className="text-center text-muted-foreground py-8">
+                    No roof facets data available
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
