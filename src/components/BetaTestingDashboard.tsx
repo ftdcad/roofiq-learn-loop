@@ -125,25 +125,17 @@ export const BetaTestingDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Hero Section with Brand Identity */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-roofiq-blue via-roofiq-blue-dark to-background border border-roofiq-blue/20 shadow-2xl">
           <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: `url(${roofHeroBg})`}}></div>
           <div className="absolute inset-0 bg-gradient-to-r from-roofiq-blue/80 via-roofiq-blue/60 to-transparent"></div>
           
-          <div className="absolute right-4 top-4 w-full max-w-sm">
-            <div className="space-y-2">
-              <AIStatusIndicator compact autoTest />
-              {trainingProgress && (
-                <TrainingProgress progress={trainingProgress} compact />
-              )}
-            </div>
-          </div>
-          <div className="relative px-8 py-8 text-center">
+          <div className="relative px-12 py-16 text-center">
             <div className="space-y-6">
               {/* Main Brand Title */}
               <div className="space-y-2">
-                <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+                <h1 className="text-6xl font-bold text-white tracking-tight">
                   RoofIQ
                 </h1>
                 <p className="text-xl text-white/90 font-medium">
@@ -170,7 +162,7 @@ export const BetaTestingDashboard: React.FC = () => {
         </div>
 
         {/* Training Progress */}
-        {trainingProgress?.totalComparisons > 0 && <TrainingProgress progress={trainingProgress} />}
+        {trainingProgress && <TrainingProgress progress={trainingProgress} />}
 
         {/* AI Status Indicator */}
         <AIStatusIndicator 

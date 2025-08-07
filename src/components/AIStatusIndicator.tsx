@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -9,17 +9,11 @@ import { supabase } from '@/integrations/supabase/client';
 interface AIStatusIndicatorProps {
   prediction?: any;
   onStatusChange?: (isWorking: boolean) => void;
-  compact?: boolean;
-  autoTest?: boolean;
-  cacheTtlMs?: number;
 }
 
 export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({ 
   prediction, 
-  onStatusChange,
-  compact = false,
-  autoTest = true,
-  cacheTtlMs = 15 * 60 * 1000
+  onStatusChange 
 }) => {
   const [testing, setTesting] = useState(false);
   const [status, setStatus] = useState<any>(null);
@@ -36,11 +30,6 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
       
       setStatus(data);
       onStatusChange?.(data.success);
-      try {
-        localStorage.setItem('openaiStatusCache', JSON.stringify({ timestamp: Date.now(), data }));
-      } catch (e) {
-        // ignore cache errors
-      }
       
       if (data.success) {
         toast({
@@ -66,88 +55,11 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
     }
   };
 
-  // Auto-test OpenAI connection with cache
-  useEffect(() => {
-    if (!autoTest) return;
-
-    try {
-      const raw = localStorage.getItem('openaiStatusCache');
-      if (raw) {
-        const cached = JSON.parse(raw);
-        if (Date.now() - cached.timestamp < cacheTtlMs) {
-          setStatus(cached.data);
-          onStatusChange?.(!!cached.data?.success);
-          return; // fresh cache, skip network call
-        }
-      }
-    } catch (e) {
-      // ignore cache read errors
-    }
-
-    let cancelled = false;
-    const run = async () => {
-      setTesting(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('test-openai-simple');
-        if (error) throw error;
-        if (!cancelled) {
-          setStatus(data);
-          onStatusChange?.(data.success);
-          try {
-            localStorage.setItem('openaiStatusCache', JSON.stringify({ timestamp: Date.now(), data }));
-          } catch {}
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setStatus({ success: false, error: err instanceof Error ? err.message : 'Unknown error' });
-          onStatusChange?.(false);
-        }
-      } finally {
-        if (!cancelled) setTesting(false);
-      }
-    };
-    run();
-
-    return () => { cancelled = true };
-  }, [autoTest, cacheTtlMs, onStatusChange]);
-
   // Check if using mock data
   const isUsingMockData = prediction?.note?.includes("temporarily unavailable") || 
                          prediction?.note?.includes("enhanced AI prediction");
 
   const connectionState = status === null ? 'idle' : status?.success ? 'ok' : 'error';
-
-  if (compact) {
-    return (
-      <div className="flex items-center justify-between p-2 rounded-md border bg-card">
-        <div className="flex items-center gap-2">
-          {connectionState === 'ok' ? (
-            <Wifi className="w-4 h-4 text-roofiq-green" />
-          ) : connectionState === 'idle' ? (
-            <div className="w-4 h-4 rounded-full bg-muted" />
-          ) : (
-            <WifiOff className="w-4 h-4 text-destructive" />
-          )}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">OpenAI</span>
-            <span className="text-xs text-muted-foreground">
-              {status === null ? 'Not tested' : status.success ? `Connected (${status.model})` : 'Disconnected'}
-            </span>
-          </div>
-        </div>
-        <Button onClick={testOpenAIConnection} disabled={testing} size="sm" variant="ghost">
-          {testing ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Retesting
-            </>
-          ) : (
-            'Retest'
-          )}
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
