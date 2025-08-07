@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      roof_analyses: {
+        Row: {
+          address: string
+          ai_confidence: number | null
+          ai_prediction: Json
+          area_error_percent: number | null
+          comparison_results: Json | null
+          coordinates: Json
+          created_at: string
+          eagleview_data: Json | null
+          eagleview_report_id: string | null
+          eagleview_upload_date: string | null
+          id: string
+          overall_accuracy_score: number | null
+          prediction_date: string
+          satellite_image_url: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          ai_confidence?: number | null
+          ai_prediction: Json
+          area_error_percent?: number | null
+          comparison_results?: Json | null
+          coordinates: Json
+          created_at?: string
+          eagleview_data?: Json | null
+          eagleview_report_id?: string | null
+          eagleview_upload_date?: string | null
+          id?: string
+          overall_accuracy_score?: number | null
+          prediction_date?: string
+          satellite_image_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          ai_confidence?: number | null
+          ai_prediction?: Json
+          area_error_percent?: number | null
+          comparison_results?: Json | null
+          coordinates?: Json
+          created_at?: string
+          eagleview_data?: Json | null
+          eagleview_report_id?: string | null
+          eagleview_upload_date?: string | null
+          id?: string
+          overall_accuracy_score?: number | null
+          prediction_date?: string
+          satellite_image_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      training_progress: {
+        Row: {
+          area_accuracy: number
+          average_accuracy: number
+          estimated_days_to_target: number | null
+          facet_detection_rate: number
+          id: string
+          last_updated: string
+          model_version: string
+          pitch_accuracy: number
+          target_comparisons: number
+          total_comparisons: number
+        }
+        Insert: {
+          area_accuracy?: number
+          average_accuracy?: number
+          estimated_days_to_target?: number | null
+          facet_detection_rate?: number
+          id?: string
+          last_updated?: string
+          model_version?: string
+          pitch_accuracy?: number
+          target_comparisons?: number
+          total_comparisons?: number
+        }
+        Update: {
+          area_accuracy?: number
+          average_accuracy?: number
+          estimated_days_to_target?: number | null
+          facet_detection_rate?: number
+          id?: string
+          last_updated?: string
+          model_version?: string
+          pitch_accuracy?: number
+          target_comparisons?: number
+          total_comparisons?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

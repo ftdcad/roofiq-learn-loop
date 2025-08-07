@@ -11,35 +11,33 @@ import { ComparisonMetrics } from '@/components/ComparisonMetrics';
 import { ProfessionalReportView } from '@/components/ProfessionalReportView';
 import { Upload as UploadIcon, Lightbulb, Sparkles, CheckCircle } from 'lucide-react';
 import { RoofPrediction } from '@/types/roof-analysis';
-import { generateMockPrediction, generateMockComparison, getMockTrainingProgress } from '@/services/mockData';
+import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
 
 export const BetaTestingDashboard: React.FC = () => {
   const [currentPrediction, setCurrentPrediction] = useState<RoofPrediction | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState(getMockTrainingProgress());
+  const [trainingProgress, setTrainingProgress] = useState<any>(null);
   const { toast } = useToast();
 
   const handleAddressSubmit = async (address: string) => {
     setIsAnalyzing(true);
     
     try {
-      // Simulate AI analysis delay
-      await new Promise(resolve => setTimeout(resolve, 2500));
-      
-      const prediction = generateMockPrediction(address);
+      const prediction = await RoofAnalysisService.analyzeRoof(address);
       setCurrentPrediction(prediction);
       
       toast({
-        title: "Analysis Complete!",
+        title: "AI Analysis Complete!",
         description: `Roof analysis finished with ${prediction.prediction.confidence.toFixed(1)}% confidence. Upload EagleView report to help train our AI!`,
       });
       
     } catch (error) {
+      console.error('Analysis error:', error);
       toast({
         title: "Analysis Failed",
-        description: "Please try again with a different address.",
+        description: error instanceof Error ? error.message : "Please try again with a different address.",
         variant: "destructive"
       });
     } finally {
@@ -53,10 +51,10 @@ export const BetaTestingDashboard: React.FC = () => {
     setIsProcessingUpload(true);
     
     try {
-      // Simulate PDF processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const { eagleViewData, comparison } = generateMockComparison(currentPrediction);
+      const { eagleViewData, comparison } = await RoofAnalysisService.processEagleViewUpload(
+        currentPrediction.id, 
+        file
+      );
       
       // Update prediction with comparison data
       const updatedPrediction = {
@@ -67,12 +65,9 @@ export const BetaTestingDashboard: React.FC = () => {
       
       setCurrentPrediction(updatedPrediction);
       
-      // Update training progress
-      setTrainingProgress(prev => ({
-        ...prev,
-        totalComparisons: prev.totalComparisons + 1,
-        averageAccuracy: prev.averageAccuracy + (comparison.overallScore - prev.averageAccuracy) * 0.1
-      }));
+      // Refresh training progress
+      const newProgress = await RoofAnalysisService.getTrainingProgress();
+      setTrainingProgress(newProgress);
       
       // Celebration effects
       confetti({
@@ -87,15 +82,30 @@ export const BetaTestingDashboard: React.FC = () => {
       });
       
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to parse EagleView report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to parse EagleView report. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsProcessingUpload(false);
     }
   };
+
+  // Load training progress on component mount
+  useEffect(() => {
+    const loadTrainingProgress = async () => {
+      try {
+        const progress = await RoofAnalysisService.getTrainingProgress();
+        setTrainingProgress(progress);
+      } catch (error) {
+        console.error('Failed to load training progress:', error);
+      }
+    };
+    
+    loadTrainingProgress();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-background p-6">
@@ -148,7 +158,7 @@ export const BetaTestingDashboard: React.FC = () => {
         </div>
 
         {/* Training Progress */}
-        <TrainingProgress progress={trainingProgress} />
+        {trainingProgress && <TrainingProgress progress={trainingProgress} />}
 
         {/* Address Input */}
         <AddressInput 
