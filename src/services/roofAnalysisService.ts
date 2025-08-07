@@ -22,8 +22,8 @@ export class RoofAnalysisService {
       });
       
       // Convert consensus result to RoofPrediction format
-      const prediction: RoofPrediction = {
-        id: crypto.randomUUID(),
+      let prediction: RoofPrediction = {
+        id: '',
         address,
         coordinates: { lat: 40.7128, lng: -74.0060 }, // Would be geocoded in production
         satelliteImage,
@@ -72,6 +72,26 @@ export class RoofAnalysisService {
           }
         }
       };
+
+      // Persist an analysis row and use its real database id
+      const { data: inserted, error: insertError } = await supabase
+        .from('roof_analyses')
+        .insert({
+          address,
+          coordinates: { lat: 40.7128, lng: -74.0060 } as any,
+          ai_prediction: prediction.prediction as any,
+          ai_confidence: prediction.prediction.confidence,
+          satellite_image_url: satelliteImage || null
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('Failed to persist analysis before returning:', insertError);
+        throw insertError;
+      }
+
+      prediction.id = inserted.id;
 
       console.log('RoofAnalysisService: Final prediction created:', {
         id: prediction.id,

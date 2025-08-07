@@ -45,14 +45,13 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
         });
       }, 200);
 
-      // Process the file
+      // Process the file with minimal payload
       const { data, error } = await supabase.functions.invoke('process-validation-report', {
         body: {
-          predictionId,
+          analysisId: predictionId,
           fileName: file.name,
           fileSize: file.size,
-          fileType: type,
-          fileData: await fileToBase64(file)
+          fileType: type
         }
       });
 
@@ -76,9 +75,10 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
 
     } catch (error) {
       console.error(`Error uploading ${type} file:`, error);
+      const description = error instanceof Error ? error.message : `Failed to process ${type} file`;
       toast({
         title: "Upload failed",
-        description: `Failed to process ${type} file`,
+        description,
         variant: "destructive",
       });
     } finally {
@@ -125,14 +125,6 @@ export const DualUploadLearning: React.FC<DualUploadLearningProps> = ({
     };
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
-  };
 
   const roofHandlers = createDragHandlers('roof');
   const footprintHandlers = createDragHandlers('footprint');

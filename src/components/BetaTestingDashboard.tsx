@@ -55,16 +55,16 @@ export const BetaTestingDashboard: React.FC = () => {
       let validationData, comparison;
       
       if (type === 'roof') {
-        const result = await RoofAnalysisService.processValidationReportUpload(
-          currentPrediction.id, 
-          data
-        );
-        validationData = result.validationData;
-        comparison = result.comparison;
+        // data is the response from edge function
+        validationData = data?.validationData;
+        comparison = data?.comparison;
+        if (!validationData || !comparison) {
+          throw new Error('Missing validation data from server response');
+        }
       } else {
-        // Handle footprint data processing
+        // Handle footprint data processing (mock for now)
         validationData = data;
-        comparison = { overallScore: 85, areaErrorPercent: 5 }; // Mock for now
+        comparison = { overallScore: 85, areaErrorPercent: 5 };
       }
       
       // Update prediction with comparison data
