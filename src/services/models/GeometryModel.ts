@@ -114,6 +114,10 @@ export class GeometryModel {
   }
 
   private enhanceFacetsWithGeometryData(facets: RoofFacet[], input: GeometryAnalysisInput): RoofFacet[] {
+    if (!facets || !Array.isArray(facets)) {
+      console.warn('GeometryModel: Invalid facets data, using empty array');
+      return [];
+    }
     return facets.map(facet => ({
       ...facet,
       confidence: this.adjustGeometricConfidence(facet, input),

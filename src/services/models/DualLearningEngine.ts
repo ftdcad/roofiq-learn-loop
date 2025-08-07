@@ -240,8 +240,17 @@ export class DualLearningEngine {
   }
 
   private mergeFacets(visionFacets: RoofFacet[], geometryFacets: RoofFacet[]): RoofFacet[] {
+    // Handle undefined or null facets arrays
+    const safevisionFacets = visionFacets || [];
+    const safeGeometryFacets = geometryFacets || [];
+    
+    if (!Array.isArray(safevisionFacets) || !Array.isArray(safeGeometryFacets)) {
+      console.warn('DualLearningEngine: Invalid facets data, using empty arrays');
+      return [];
+    }
+    
     // Intelligent facet merging - simplified for now
-    const allFacets = [...visionFacets, ...geometryFacets];
+    const allFacets = [...safevisionFacets, ...safeGeometryFacets];
     const mergedFacets: RoofFacet[] = [];
     
     // Group by type and merge similar facets
@@ -397,7 +406,10 @@ export class DualLearningEngine {
   private identifyConflictAreas(visionPrediction: ModelPrediction, geometryPrediction: ModelPrediction): string[] {
     const conflicts: string[] = [];
     
-    if (Math.abs(visionPrediction.facets.length - geometryPrediction.facets.length) > 2) {
+    const visionFacetCount = (visionPrediction.facets || []).length;
+    const geometryFacetCount = (geometryPrediction.facets || []).length;
+    
+    if (Math.abs(visionFacetCount - geometryFacetCount) > 2) {
       conflicts.push('Facet count disagreement');
     }
 

@@ -94,6 +94,10 @@ export class VisionModel {
   }
 
   private enhanceFacetsWithVisionData(facets: RoofFacet[], input: ImageAnalysisInput): RoofFacet[] {
+    if (!facets || !Array.isArray(facets)) {
+      console.warn('VisionModel: Invalid facets data, using empty array');
+      return [];
+    }
     return facets.map(facet => ({
       ...facet,
       confidence: this.adjustFacetConfidence(facet, input),
