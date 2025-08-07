@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Home, Layers, Calculator, TrendingUp } from 'lucide-react';
 import { RoofPrediction } from '@/types/roof-analysis';
+import { UncertaintyIndicator } from './UncertaintyIndicator';
+import { InstantFeedback } from './InstantFeedback';
+import { NeighborhoodContext } from './NeighborhoodContext';
+import { ShowYourWork } from './ShowYourWork';
+import { NeighborhoodService, NeighborhoodData } from '@/services/neighborhoodService';
 
 interface RoofVisualizationProps {
   prediction: RoofPrediction;
@@ -15,6 +20,20 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
   showConfidence = true 
 }) => {
   const { prediction: pred } = prediction;
+  const [neighborhoodData, setNeighborhoodData] = useState<NeighborhoodData | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  useEffect(() => {
+    const loadNeighborhoodData = async () => {
+      const data = await NeighborhoodService.getNeighborhoodData(
+        prediction.address,
+        prediction.coordinates
+      );
+      setNeighborhoodData(data);
+    };
+
+    loadNeighborhoodData();
+  }, [prediction.address, prediction.coordinates]);
   
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 85) return 'text-roofiq-green';
@@ -30,6 +49,16 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* Week 1: Uncertainty Detection */}
+      <UncertaintyIndicator prediction={prediction} />
+
+      {/* Week 3: Neighborhood Sanity Check */}
+      <NeighborhoodContext 
+        prediction={pred.totalArea}
+        neighborhoodData={neighborhoodData}
+        address={prediction.address}
+      />
+
       {/* Confidence Score */}
       {showConfidence && (
         <div className={`p-4 rounded-lg border ${getConfidenceBg(pred.confidence)}`}>
@@ -130,6 +159,17 @@ export const RoofVisualization: React.FC<RoofVisualizationProps> = ({
           <span className="font-medium text-foreground">{pred.wasteFactor}%</span>
         </div>
       </div>
+
+      {/* Week 4: Show Your Work Transparency */}
+      <ShowYourWork prediction={prediction} />
+
+      {/* Week 2: Instant Feedback Widget */}
+      {!feedbackSubmitted && (
+        <InstantFeedback 
+          predictionId={prediction.id}
+          onFeedbackSubmitted={() => setFeedbackSubmitted(true)}
+        />
+      )}
     </div>
   );
 };

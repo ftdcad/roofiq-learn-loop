@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      neighborhood_analysis: {
+        Row: {
+          address: string
+          analysis_date: string
+          average_roof_area: number | null
+          coordinates: Json
+          id: string
+          median_roof_area: number | null
+          radius_miles: number
+          total_samples: number | null
+        }
+        Insert: {
+          address: string
+          analysis_date?: string
+          average_roof_area?: number | null
+          coordinates: Json
+          id?: string
+          median_roof_area?: number | null
+          radius_miles?: number
+          total_samples?: number | null
+        }
+        Update: {
+          address?: string
+          analysis_date?: string
+          average_roof_area?: number | null
+          coordinates?: Json
+          id?: string
+          median_roof_area?: number | null
+          radius_miles?: number
+          total_samples?: number | null
+        }
+        Relationships: []
+      }
+      prediction_feedback: {
+        Row: {
+          created_at: string
+          feedback_type: string
+          id: string
+          prediction_id: string
+          user_feedback: string | null
+        }
+        Insert: {
+          created_at?: string
+          feedback_type: string
+          id?: string
+          prediction_id: string
+          user_feedback?: string | null
+        }
+        Update: {
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          prediction_id?: string
+          user_feedback?: string | null
+        }
+        Relationships: []
+      }
       roof_analyses: {
         Row: {
           address: string
