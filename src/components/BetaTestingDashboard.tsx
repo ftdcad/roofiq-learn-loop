@@ -143,7 +143,10 @@ export const BetaTestingDashboard: React.FC = () => {
           currentPrediction.coordinates,
           { zoom: usedZoom, size: '1024x1024', retina: true }
         );
-        if (img) setSatelliteUrl(img);
+        if (img) {
+          setSatelliteUrl(img);
+          console.log('Satellite image URL set:', img, 'address:', currentPrediction.address);
+        }
       } catch (e) {
         console.warn('Satellite capture failed', e);
         toast({ title: 'Satellite capture failed', description: 'Check Mapbox key in Supabase edge function secrets.', variant: 'destructive' });
@@ -151,6 +154,12 @@ export const BetaTestingDashboard: React.FC = () => {
     };
     run();
   }, [currentPrediction?.id]);
+
+  useEffect(() => {
+    if (satelliteUrl) {
+      console.log('Debug: satelliteUrl changed:', satelliteUrl);
+    }
+  }, [satelliteUrl]);
 
   // Build facets for diagram (L-shaped, multi-facet with diagonal ridges)
   function buildFallbackFacets(totalArea: number, _totalPerimeter?: number, predominantPitch?: string): RoofFacet[] {
@@ -352,11 +361,11 @@ export const BetaTestingDashboard: React.FC = () => {
 
               {/* Technical Roof Diagram + Source Imagery (right column) */}
               <div>
-                <Card className="sticky top-4">
+                <Card className="sticky top-0 z-20 bg-background">
                   <CardHeader>
                     <CardTitle>Technical Roof Diagram</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="h-[560px]">
                     {!hasGeometry && (
                       <div className="mb-3 inline-flex items-center gap-2 text-xs text-roofiq-amber">
                         <TriangleAlert className="w-4 h-4" />
