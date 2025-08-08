@@ -17,6 +17,7 @@ import { RoofAnalysisService } from '@/services/roofAnalysisService';
 import confetti from 'canvas-confetti';
 import { MapboxService } from '@/services/mapboxService';
 import { RoofTraceOverlay } from '@/components/RoofTraceOverlay';
+import { RoofSketchCanvas } from '@/components/RoofSketchCanvas';
 import { Badge } from '@/components/ui/badge';
 import { ScaleCalibrationService } from '@/services/ScaleCalibrationService';
 import { TEST_EAGLEVIEW_REPORT } from '@/data/testEagleViewReport';
@@ -33,6 +34,7 @@ export const BetaTestingDashboard: React.FC = () => {
   const [calibration, setCalibration] = useState<null | { feetPerPixel: number; method: 'road' | 'car' | 'combined'; confidence: number }>(null);
   const { toast } = useToast();
   const [testReportLoaded, setTestReportLoaded] = useState(false);
+  const [aiSketchFacets, setAiSketchFacets] = useState<{ points: number[] }[]>([]);
 
   const handleAddressSubmit = async (address: string) => {
     setIsAnalyzing(true);
@@ -335,6 +337,13 @@ export const BetaTestingDashboard: React.FC = () => {
         currentPrediction?.prediction.predominantPitch
       );
 
+  // Map AI/fallback facets into editable sketch format
+  useEffect(() => {
+    if (!diagramFacets?.length) return;
+    const mapped = diagramFacets.map(f => ({ points: (f.polygon as [number, number][])?.flat() || [] }));
+    setAiSketchFacets(mapped);
+  }, [diagramFacets]);
+
   return (
     <div className="min-h-screen bg-gradient-background p-6">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -436,6 +445,25 @@ export const BetaTestingDashboard: React.FC = () => {
               ) : (
                 <div className="text-sm text-muted-foreground">Image will appear after analysis starts.</div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Editable Roof Sketch (Konva) */}
+        {!isAnalyzing && satelliteUrl && diagramFacets?.length > 0 && (
+          <Card className="roofiq-card">
+            <CardHeader>
+              <CardTitle>Editable Roof Sketch</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RoofSketchCanvas
+                imageUrl={satelliteUrl}
+                initialFacets={aiSketchFacets}
+                onFacetsChange={setAiSketchFacets}
+              />
+              <div className="text-xs text-muted-foreground mt-2">
+                Drag green polygons to adjust; click to draw a new red outline and double-click to finish.
+              </div>
             </CardContent>
           </Card>
         )}
