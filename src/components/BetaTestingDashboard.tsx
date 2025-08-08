@@ -419,6 +419,26 @@ export const BetaTestingDashboard: React.FC = () => {
           </Card>
         )}
 
+        {/* Quick Satellite Preview */}
+        {!isAnalyzing && (
+          <Card className="roofiq-card">
+            <CardHeader>
+              <CardTitle>Source Satellite Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {satelliteUrl ? (
+                <img
+                  src={satelliteUrl}
+                  alt={`Satellite of ${currentPrediction?.address || 'selected address'}`}
+                  className="w-full h-auto rounded-md border border-border"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="text-sm text-muted-foreground">Image will appear after analysis starts.</div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Professional Reports */}
         {currentPrediction && (
