@@ -79,7 +79,7 @@ export const AIStatusIndicator: React.FC<AIStatusIndicatorProps> = ({
           <AlertDescription className="text-roofiq-green">
             <strong>✅ Live AI Analysis Active</strong>
             <br />
-            <span className="text-sm">Using real GPT-4 Vision analysis</span>
+            <span className="text-sm">{status?.model ? `Model: ${status.model}` : 'OpenAI connected'}</span>
           </AlertDescription>
         </Alert>
       ) : null}

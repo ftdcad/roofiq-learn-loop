@@ -223,7 +223,9 @@ ANALYSIS APPROACH:
     
     try {
       prediction = JSON.parse(aiContent);
-      prediction.squares = prediction.totalArea / 100;
+      prediction.totalArea = Math.round(Number(prediction.totalArea || 0));
+      prediction.squares = Number((((prediction.totalArea) / 100) || 0).toFixed(1));
+      prediction.wasteFactor = Math.min(25, Math.max(10, Math.round(Number(prediction.wasteFactor ?? 15))));
     } catch (parseError) {
       console.error('Failed to parse OpenAI response:', parseError);
       throw new Error('Invalid AI response format');

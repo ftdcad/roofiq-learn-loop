@@ -4,6 +4,7 @@ import { DualLearningEngine } from './models/DualLearningEngine';
 
 export class RoofAnalysisService {
   private static dualEngine = new DualLearningEngine();
+  private static cache = new Map<string, RoofPrediction>();
 
   static async analyzeRoof(address: string, satelliteImage?: string): Promise<RoofPrediction> {
     try {
@@ -30,6 +31,13 @@ export class RoofAnalysisService {
         }
       } catch (geoErr) {
         console.warn('Geocode invocation error, proceeding with defaults:', geoErr);
+      }
+      
+      // Address-based caching to ensure consistent results
+      const cached = this.cache.get(resolvedAddress);
+      if (cached) {
+        console.log('Returning cached analysis for:', resolvedAddress);
+        return cached;
       }
       
       // 2) Use the new dual-model architecture
@@ -128,6 +136,7 @@ export class RoofAnalysisService {
       }
 
       prediction.id = inserted.id;
+      this.cache.set(resolvedAddress, prediction);
 
       console.log('RoofAnalysisService: Final prediction created:', {
         id: prediction.id,

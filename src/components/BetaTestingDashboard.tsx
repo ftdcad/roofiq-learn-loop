@@ -41,9 +41,11 @@ export const BetaTestingDashboard: React.FC = () => {
       const prediction = await RoofAnalysisService.analyzeRoof(address);
       setCurrentPrediction(prediction);
       
+      const conf = Number(prediction.prediction.confidence || 0);
+      const level = conf >= 85 ? 'High' : conf >= 70 ? 'Medium' : 'Low';
       toast({
         title: "AI Analysis Complete!",
-        description: `Roof analysis finished with ${prediction.prediction.confidence.toFixed(1)}% confidence. Upload professional report to help train our AI!`,
+        description: `Confidence: ${level}. Upload professional report to help train our AI!`,
       });
       
     } catch (error) {
@@ -123,8 +125,17 @@ export const BetaTestingDashboard: React.FC = () => {
 
   const loadTestReport = async () => {
     if (!currentPrediction) {
-      toast({ title: 'No analysis yet', description: 'Run an address analysis first.', variant: 'destructive' });
-      return;
+      setIsAnalyzing(true);
+      try {
+        const prediction = await RoofAnalysisService.analyzeRoof(TEST_EAGLEVIEW_REPORT.address);
+        setCurrentPrediction(prediction);
+      } catch (e) {
+        toast({ title: 'Analysis failed', description: 'Could not analyze test address.', variant: 'destructive' });
+        setIsAnalyzing(false);
+        return;
+      } finally {
+        setIsAnalyzing(false);
+      }
     }
 
     try {
@@ -379,11 +390,35 @@ export const BetaTestingDashboard: React.FC = () => {
           }}
         />
 
+        {/* Test Mode (always visible) */}
+        <Card className="border-2 border-roofiq-amber mb-4">
+          <CardHeader>
+            <CardTitle>Test Mode (Upload Broken)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button size="lg" className="w-full" onClick={loadTestReport}>
+              Load Sample EagleView Report
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Address Input */}
         <AddressInput 
           onSubmit={handleAddressSubmit}
           isLoading={isAnalyzing}
         />
+
+        {/* Processing status */}
+        {isAnalyzing && (
+          <Card className="roofiq-card">
+            <div className="p-4 space-y-1 text-sm">
+              <div>Fetching satellite image...</div>
+              <div>Analyzing roof geometry...</div>
+              <div>Calculating measurements...</div>
+            </div>
+          </Card>
+        )}
+
 
         {/* Professional Reports */}
         {currentPrediction && (
@@ -453,7 +488,7 @@ export const BetaTestingDashboard: React.FC = () => {
 
               {/* Technical Roof Diagram + Source Imagery (right column) */}
               <div>
-                <Card className="sticky top-0 z-20 bg-background">
+                <Card className="sticky top-20 z-10 bg-background">
                   <CardHeader>
                     <CardTitle>Technical Roof Diagram</CardTitle>
                   </CardHeader>
